@@ -19,6 +19,10 @@ function noteStage(number, title, timing, explanation, notes) {
 if (!product) {
   container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
 } else {
+  const topNotes = product.topNotes || product.notes?.top;
+  const heartNotes = product.heartNotes || product.notes?.heart;
+  const baseNotes = product.baseNotes || product.notes?.base;
+
   document.title = `${product.name} ${product.brand} | Zoryvena Perfumes`;
   container.innerHTML = `<div class="product-detail-grid">
     <section class="product-gallery">${media(product,'large')}<p class="image-note">A imagem oficial será adicionada após autorização do fornecedor.</p></section>
@@ -41,9 +45,9 @@ if (!product) {
       <p>O perfume muda conforme evapora na pele. Primeiro surgem as notas mais leves; depois aparece a personalidade principal; por fim permanecem as notas mais profundas e duradouras.</p>
     </div>
     <div class="notes-grid">
-      ${noteStage('01', 'Notas de saída', 'Primeiros minutos', 'São a primeira impressão da fragrância. Costumam ser mais leves, frescas ou vibrantes e começam a diminuir logo após a aplicação.', product.topNotes)}
-      ${noteStage('02', 'Notas de coração', 'Após a abertura', 'Aparecem quando a saída suaviza. Formam o corpo do perfume e revelam sua personalidade principal durante boa parte do uso.', product.heartNotes)}
-      ${noteStage('03', 'Notas de fundo', 'Fase final e mais duradoura', 'Surgem gradualmente e permanecem por mais tempo na pele. Dão profundidade, fixação e deixam o rastro final da fragrância.', product.baseNotes)}
+      ${noteStage('01', 'Notas de saída', 'Primeiros minutos', 'São a primeira impressão da fragrância. Costumam ser mais leves, frescas ou vibrantes e começam a diminuir logo após a aplicação.', topNotes)}
+      ${noteStage('02', 'Notas de coração', 'Após a abertura', 'Aparecem quando a saída suaviza. Formam o corpo do perfume e revelam sua personalidade principal durante boa parte do uso.', heartNotes)}
+      ${noteStage('03', 'Notas de fundo', 'Fase final e mais duradoura', 'Surgem gradualmente e permanecem por mais tempo na pele. Dão profundidade, fixação e deixam o rastro final da fragrância.', baseNotes)}
     </div>
   </section>
   <section class="section"><div class="section-heading"><span class="eyebrow">Continue explorando</span><h2>Perfumes relacionados</h2></div><div class="product-grid" id="relatedProducts"></div></section>`;
