@@ -3,8 +3,8 @@
   "short_name": "Zoryvena",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffdf8",
-  "theme_color": "#171513",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",
