@@ -1,5 +1,14 @@
 import { getCart, getFavorites, getCompare, getConfig, showToast, toggleFavorite, toggleCompare, syncStoreData } from './store.js';
 
+function loadMobileFixes() {
+  if (document.querySelector('link[data-zoryvena-mobile-fixes]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/assets/css/mobile-fixes.css?v=20260726-1';
+  link.dataset.zoryvenaMobileFixes = 'true';
+  document.head.appendChild(link);
+}
+
 function updateCounts() {
   const cartCount = getCart().reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   document.querySelectorAll('[data-cart-count]').forEach(el => el.textContent = cartCount);
@@ -139,6 +148,7 @@ function bindGlobalActions() {
   });
 }
 
+loadMobileFixes();
 window.addEventListener('zoryvena:state', updateCounts);
 window.addEventListener('zoryvena:data', applyConfig);
 updateCounts();
