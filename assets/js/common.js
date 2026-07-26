@@ -16,10 +16,34 @@ function formatShippingValue(value) {
   }).format(Number(value));
 }
 
+function whatsappContactUrl(number) {
+  const digits = String(number || '').replace(/\D/g, '');
+  const message = 'Olá! Vim pelo site da Zoryvena Perfumes e gostaria de atendimento.';
+  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}` : '';
+}
+
 function applyConfig() {
   const config = getConfig();
-  const formattedWhatsapp = String(config.whatsapp || '').replace(/^(55)(\d{2})(\d{5})(\d{4})$/, '+$1 ($2) $3-$4');
-  document.querySelectorAll('[data-store-whatsapp]').forEach(el => el.textContent = formattedWhatsapp || 'WhatsApp a configurar');
+  const whatsappUrl = whatsappContactUrl(config.whatsapp);
+
+  document.querySelectorAll('[data-store-whatsapp]').forEach(el => {
+    if (!whatsappUrl) {
+      el.textContent = 'WhatsApp indisponível';
+      return;
+    }
+
+    if (el.tagName === 'A') {
+      el.href = whatsappUrl;
+      el.target = '_blank';
+      el.rel = 'noopener noreferrer';
+      el.classList.add('button', 'button-outline');
+      el.textContent = 'Falar pelo WhatsApp';
+      return;
+    }
+
+    el.innerHTML = `<a class="button button-outline" href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" aria-label="Falar com a Zoryvena pelo WhatsApp">Falar pelo WhatsApp</a>`;
+  });
+
   document.querySelectorAll('[data-store-instagram]').forEach(el => el.textContent = config.instagram);
   document.querySelectorAll('[data-store-email]').forEach(el => el.textContent = config.email || 'E-mail a configurar');
   document.querySelectorAll('[data-current-year]').forEach(el => el.textContent = new Date().getFullYear());
