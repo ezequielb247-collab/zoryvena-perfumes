@@ -1,0 +1,57 @@
+/* Ajustes móveis complementares da Zoryvena */
+@media (max-width: 650px) {
+  body {
+    padding-bottom: calc(118px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  main {
+    overflow: visible;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .notes-grid article {
+    display: block !important;
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 24px 22px !important;
+  }
+
+  .notes-grid article span {
+    display: block;
+    margin: 0 0 8px;
+    font-size: 26px !important;
+    line-height: 1;
+  }
+
+  .notes-grid article h3 {
+    min-height: 0 !important;
+    margin: 0 0 8px !important;
+    font-size: 29px !important;
+    line-height: 1.12 !important;
+  }
+
+  .notes-grid article p {
+    min-height: 0 !important;
+    margin: 0 !important;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .section:has(.notes-grid) {
+    padding-bottom: calc(138px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .mobile-bottom-nav {
+    min-height: 86px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-bottom-nav + .toast {
+    bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
+}
