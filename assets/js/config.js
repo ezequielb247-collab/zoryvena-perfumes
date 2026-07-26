@@ -2,9 +2,9 @@ export const DEFAULT_CONFIG = {
   name: 'Zoryvena Perfumes',
   shortName: 'Zoryvena',
   slogan: 'Sua presença começa pela fragrância.',
-  whatsapp: 'PREENCHER',
+  whatsapp: '5521997324933',
   instagram: '@zoryvenaperfumes',
-  email: 'PREENCHER',
+  email: 'zoryvenaperfumes@gmail.com',
   freeShippingFrom: null,
   siteUrl: 'https://zoryvena-perfumes.onrender.com'
 };
