@@ -2,7 +2,7 @@
 
 ## 2026-07 — Nome inicial
 
-A marca de trabalho será **Velmora Perfumes**, sujeita à validação no INPI.
+A marca de trabalho será **Zoryvena Perfumes**, sujeita à validação no INPI.
 
 ## 2026-07 — Catálogo
 

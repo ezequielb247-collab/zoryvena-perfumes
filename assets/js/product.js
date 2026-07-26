@@ -5,7 +5,7 @@ const product = getProduct(id);
 const container = document.querySelector('#productPage');
 if (!product) container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
 else {
-  document.title = `${product.name} ${product.brand} | Velmora Perfumes`;
+  document.title = `${product.name} ${product.brand} | Zoryvena Perfumes`;
   container.innerHTML = `<div class="product-detail-grid">
     <section class="product-gallery">${media(product,'large')}<p class="image-note">A imagem oficial será adicionada após autorização do fornecedor.</p></section>
     <section class="product-detail-copy">

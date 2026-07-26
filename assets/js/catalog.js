@@ -39,5 +39,5 @@ function updateCompareTray() {
 form.addEventListener('input', render); form.addEventListener('change', render);
 document.querySelector('#clearFilters').addEventListener('click', () => { form.reset(); render(); });
 document.querySelector('#clearCompare').addEventListener('click', () => { clearCompare(); document.querySelectorAll('[data-compare]').forEach(el => el.checked=false); updateCompareTray(); showToast('Comparação limpa.'); });
-window.addEventListener('velmora:state', updateCompareTray);
+window.addEventListener('zoryvena:state', updateCompareTray);
 render();

@@ -3,7 +3,7 @@ const login=document.querySelector('#adminLogin');const panel=document.querySele
 function authenticated(){return sessionStorage.getItem(KEYS.adminSession)==='ok';}
 function showPanel(){login.hidden=true;panel.hidden=false;renderAll();}
 if(authenticated())showPanel();
-document.querySelector('#loginForm').addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if(d.email==='admin@velmora.local'&&d.password==='velmora2026'){sessionStorage.setItem(KEYS.adminSession,'ok');showPanel();}else document.querySelector('#loginError').hidden=false;});
+document.querySelector('#loginForm').addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if(d.email==='admin@zoryvena.local'&&d.password==='zoryvena2026'){sessionStorage.setItem(KEYS.adminSession,'ok');showPanel();}else document.querySelector('#loginError').hidden=false;});
 document.querySelector('#logoutAdmin').addEventListener('click',()=>{sessionStorage.removeItem(KEYS.adminSession);location.reload();});
 
 document.querySelectorAll('[data-admin-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-admin-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.admin-view').forEach(v=>v.hidden=true);document.querySelector(`#${b.dataset.adminTab}`).hidden=false;}));

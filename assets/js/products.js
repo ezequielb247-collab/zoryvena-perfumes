@@ -1,4 +1,4 @@
-// Catálogo inicial da Velmora. Preços e estoque devem ser preenchidos com os dados do fornecedor.
+// Catálogo inicial da Zoryvena. Preços e estoque devem ser preenchidos com os dados do fornecedor.
 export const BASE_PRODUCTS = [
   {
     "id": "lattafa-asad",

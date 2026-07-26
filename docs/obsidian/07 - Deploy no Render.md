@@ -4,7 +4,7 @@
 
 - **Tipo:** Static Site
 - **Branch:** main
-- **Root Directory:** `Projetos/Velmora Perfumes/Site`
+- **Root Directory:** `Projetos/Zoryvena Perfumes/Site`
 - **Build Command:** `echo "Site estático pronto"`
 - **Publish Directory:** `.`
 

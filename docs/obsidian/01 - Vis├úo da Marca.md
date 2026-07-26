@@ -1,6 +1,6 @@
 # Visão da Marca
 
-**Marca:** Velmora Perfumes  
+**Marca:** Zoryvena Perfumes  
 **Slogan:** Sua presença começa pela fragrância.
 
 ## Posicionamento

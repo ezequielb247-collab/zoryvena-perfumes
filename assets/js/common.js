@@ -24,5 +24,5 @@ function bindGlobalActions() {
   const menuButton = document.querySelector('.menu-toggle'); const menu = document.querySelector('.mobile-menu');
   menuButton?.addEventListener('click', () => { const open = menu.hidden; menu.hidden = !open; menuButton.setAttribute('aria-expanded', String(open)); });
 }
-window.addEventListener('velmora:state', updateCounts);
+window.addEventListener('zoryvena:state', updateCounts);
 updateCounts(); applyConfig(); bindGlobalActions();

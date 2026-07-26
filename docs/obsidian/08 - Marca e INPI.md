@@ -1,6 +1,6 @@
 # Marca e INPI
 
-O nome **Velmora Perfumes** permanece provisório até busca de anterioridade e análise definitiva.
+O nome **Zoryvena Perfumes** permanece provisório até busca de anterioridade e análise definitiva.
 
 ## Antes de investir em materiais permanentes
 

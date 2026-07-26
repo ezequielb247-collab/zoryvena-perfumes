@@ -21,7 +21,7 @@ export function productUrl(product) { return `/produto/${product.id}/`; }
 export function productImage(product) { return product.image ? `/${product.image.replace(/^\//, '')}` : ''; }
 
 export function getCart() { return load(KEYS.cart, []); }
-export function saveCart(cart) { save(KEYS.cart, cart); window.dispatchEvent(new Event('velmora:state')); }
+export function saveCart(cart) { save(KEYS.cart, cart); window.dispatchEvent(new Event('zoryvena:state')); }
 export function addToCart(product, quantity = 1) {
   if (!isAvailable(product)) return false;
   const cart = getCart();
@@ -45,16 +45,16 @@ export function cartTotal() { return cartDetails().reduce((total, item) => total
 export function getFavorites() { return load(KEYS.favorites, []); }
 export function toggleFavorite(id) {
   const favorites = getFavorites(); const next = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
-  save(KEYS.favorites, next); window.dispatchEvent(new Event('velmora:state')); return next.includes(id);
+  save(KEYS.favorites, next); window.dispatchEvent(new Event('zoryvena:state')); return next.includes(id);
 }
 export function getCompare() { return load(KEYS.compare, []); }
 export function toggleCompare(id) {
   const selected = getCompare();
-  if (selected.includes(id)) { const next = selected.filter(x => x !== id); save(KEYS.compare, next); window.dispatchEvent(new Event('velmora:state')); return { ok: true, selected: next }; }
+  if (selected.includes(id)) { const next = selected.filter(x => x !== id); save(KEYS.compare, next); window.dispatchEvent(new Event('zoryvena:state')); return { ok: true, selected: next }; }
   if (selected.length >= 3) return { ok: false, selected };
-  const next = [...selected, id]; save(KEYS.compare, next); window.dispatchEvent(new Event('velmora:state')); return { ok: true, selected: next };
+  const next = [...selected, id]; save(KEYS.compare, next); window.dispatchEvent(new Event('zoryvena:state')); return { ok: true, selected: next };
 }
-export function clearCompare() { save(KEYS.compare, []); window.dispatchEvent(new Event('velmora:state')); }
+export function clearCompare() { save(KEYS.compare, []); window.dispatchEvent(new Event('zoryvena:state')); }
 
 export function whatsappUrl(message) {
   const config = getConfig();

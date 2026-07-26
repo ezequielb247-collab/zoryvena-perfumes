@@ -1,4 +1,4 @@
-# Velmora Perfumes — Painel do Projeto
+# Zoryvena Perfumes — Painel do Projeto
 
 ## Visão rápida
 

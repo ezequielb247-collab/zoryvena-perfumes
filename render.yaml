@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: velmora-perfumes
+    name: zoryvena-perfumes
     runtime: static
-    buildCommand: echo "Site estático pronto"
-    staticPublishPath: .
+    buildCommand: bash render-build.sh
+    staticPublishPath: ./dist
     autoDeployTrigger: commit
     headers:
       - path: /*
@@ -12,6 +12,9 @@ services:
       - path: /*
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
-      - path: /admin/*
-        name: X-Robots-Tag
-        value: noindex, nofollow
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
