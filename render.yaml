@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: velmora-perfumes
+    runtime: static
+    buildCommand: echo "Site estático pronto"
+    staticPublishPath: .
+    autoDeployTrigger: commit
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /admin/*
+        name: X-Robots-Tag
+        value: noindex, nofollow
