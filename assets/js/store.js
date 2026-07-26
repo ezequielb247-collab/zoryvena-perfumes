@@ -105,12 +105,11 @@ export function productWhatsapp(product) { return whatsappUrl(`Olá! Gostaria de
 
 export async function createOrder(data) {
   const items = cartDetails().map(item => ({ id: item.id, quantity: item.quantity }));
-  const { data: result, error } = await supabase.rpc('create_store_order', {
-    p_customer: data,
-    p_items: items,
-    p_notes: data.notes || null,
+  const { data: result, error } = await supabase.functions.invoke('create-order', {
+    body: { customer: data, items, notes: data.notes || null },
   });
   if (error) throw error;
+  if (result?.error) throw new Error(result.error);
   saveCart([]);
   return {
     id: result.orderCode,
