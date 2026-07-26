@@ -1,3 +1,14 @@
+/* Explicação da evolução olfativa */
+.notes-section .section-heading{max-width:860px}
+.notes-section .section-heading>p{max-width:780px;font-size:15px;line-height:1.7}
+.note-stage{position:relative;overflow:hidden}
+.note-stage:after{content:'';position:absolute;right:-45px;top:-45px;width:130px;height:130px;border:1px solid rgba(212,166,77,.12);border-radius:50%;pointer-events:none}
+.note-stage .note-number{display:block;color:var(--premium-gold);font:600 34px/1 var(--serif)}
+.note-stage .note-timing{display:inline-block;margin:16px 0 7px;color:var(--premium-gold-soft);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.note-stage .note-explanation{margin:0 0 20px;color:var(--premium-muted);font-size:14px;line-height:1.65}
+.note-stage .note-ingredients{padding-top:17px;border-top:1px solid rgba(212,166,77,.18);color:#eee8de;font-size:13px;line-height:1.6}
+.note-stage .note-ingredients strong{display:block;margin-bottom:4px;color:var(--premium-gold-soft);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+
 /* Ajustes móveis complementares da Zoryvena */
 @media (max-width: 650px) {
   body {
@@ -6,6 +17,11 @@
 
   main {
     overflow: visible;
+  }
+
+  .notes-section .section-heading>p{
+    font-size:14px;
+    line-height:1.6;
   }
 
   .notes-grid {
@@ -30,16 +46,26 @@
 
   .notes-grid article h3 {
     min-height: 0 !important;
-    margin: 0 0 8px !important;
+    margin: 0 0 10px !important;
     font-size: 29px !important;
     line-height: 1.12 !important;
   }
 
   .notes-grid article p {
     min-height: 0 !important;
-    margin: 0 !important;
+    margin: 0 0 16px !important;
     font-size: 14px;
     line-height: 1.55;
+  }
+
+  .note-stage .note-timing{
+    margin:8px 0 7px;
+    font-size:9px;
+  }
+
+  .note-stage .note-ingredients{
+    padding-top:14px;
+    font-size:13px;
   }
 
   .section:has(.notes-grid) {
