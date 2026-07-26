@@ -35,6 +35,9 @@ export function mapProductRow(row) {
     projection: row.projection,
     inspiredBy: row.inspired_by,
     description: row.description,
+    topNotes: row.top_notes,
+    heartNotes: row.heart_notes,
+    baseNotes: row.base_notes,
     notes: {
       top: row.top_notes,
       heart: row.heart_notes,
