@@ -5,7 +5,9 @@ const login = document.querySelector('#adminLogin');
 const panel = document.querySelector('#adminPanel');
 const loginForm = document.querySelector('#loginForm');
 const loginMessage = document.querySelector('#loginMessage');
-const magicLinkButton = document.querySelector('#magicLinkButton');
+const firstAccessButton = document.querySelector('#magicLinkButton');
+const resetPasswordButton = document.querySelector('#resetPasswordButton');
+const passwordForm = document.querySelector('#passwordForm');
 const ADMIN_EMAIL = 'zoryvenaperfumes@gmail.com';
 
 let state = { products: [], orders: [], customers: [], coupons: [], settings: null };
@@ -18,6 +20,11 @@ function message(text, error = false) {
 function valueOrNull(value) { return value === '' || value == null ? null : Number(value); }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function formatDate(value) { return value ? new Date(value).toLocaleString('pt-BR') : '—'; }
+
+function activateTab(viewId) {
+  document.querySelectorAll('[data-admin-tab]').forEach(item => item.classList.toggle('active', item.dataset.adminTab === viewId));
+  document.querySelectorAll('.admin-view').forEach(view => { view.hidden = view.id !== viewId; });
+}
 
 async function isAuthorizedAdmin() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -51,7 +58,7 @@ loginForm.addEventListener('submit', async event => {
   const email = String(formData.email || '').trim().toLowerCase();
   const password = String(formData.password || '');
   if (email !== ADMIN_EMAIL) return message('Use o e-mail oficial da Zoryvena.', true);
-  if (!password) return message('Informe a senha ou use “Receber link de acesso”.', true);
+  if (password.length < 8) return message('A senha precisa ter pelo menos 8 caracteres.', true);
   const button = loginForm.querySelector('button[type="submit"]');
   button.disabled = true;
   try {
@@ -63,32 +70,37 @@ loginForm.addEventListener('submit', async event => {
   } finally { button.disabled = false; }
 });
 
-magicLinkButton.addEventListener('click', async () => {
+firstAccessButton.addEventListener('click', async () => {
   const formData = Object.fromEntries(new FormData(loginForm));
   const email = String(formData.email || '').trim().toLowerCase();
   const password = String(formData.password || '');
   if (email !== ADMIN_EMAIL) return message('Use o e-mail oficial da Zoryvena.', true);
-  magicLinkButton.disabled = true;
+  if (password.length < 8) return message('Digite primeiro a senha que deseja usar, com no mínimo 8 caracteres.', true);
+  firstAccessButton.disabled = true;
   try {
-    if (password.length >= 8) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${location.origin}/admin/` },
-      });
-      if (error) throw error;
-      message('Cadastro solicitado. Confirme o e-mail enviado pelo Supabase e depois entre com a senha.');
-    } else {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${location.origin}/admin/`, shouldCreateUser: true },
-      });
-      if (error) throw error;
-      message('Link de acesso enviado. Confira a caixa de entrada e o spam.');
-    }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${location.origin}/admin/` },
+    });
+    if (error) throw error;
+    message('A senha já foi definida. Agora abra o e-mail e confirme a conta; o link pode entrar no painel automaticamente.');
   } catch (error) {
-    message(error.message || 'Não foi possível enviar o acesso.', true);
-  } finally { magicLinkButton.disabled = false; }
+    message(error.message || 'Não foi possível criar o primeiro acesso.', true);
+  } finally { firstAccessButton.disabled = false; }
+});
+
+resetPasswordButton.addEventListener('click', async () => {
+  resetPasswordButton.disabled = true;
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+      redirectTo: `${location.origin}/admin/`,
+    });
+    if (error) throw error;
+    message('E-mail de redefinição enviado. Ao abrir o link, vá em Configurações → Senha administrativa.');
+  } catch (error) {
+    message(error.message || 'Não foi possível enviar a redefinição.', true);
+  } finally { resetPasswordButton.disabled = false; }
 });
 
 document.querySelector('#logoutAdmin').addEventListener('click', async () => {
@@ -97,12 +109,7 @@ document.querySelector('#logoutAdmin').addEventListener('click', async () => {
 });
 document.querySelector('#refreshAdmin').addEventListener('click', loadAll);
 
-document.querySelectorAll('[data-admin-tab]').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('[data-admin-tab]').forEach(item => item.classList.remove('active'));
-  button.classList.add('active');
-  document.querySelectorAll('.admin-view').forEach(view => view.hidden = true);
-  document.querySelector(`#${button.dataset.adminTab}`).hidden = false;
-}));
+document.querySelectorAll('[data-admin-tab]').forEach(button => button.addEventListener('click', () => activateTab(button.dataset.adminTab)));
 
 async function loadAll() {
   const refresh = document.querySelector('#refreshAdmin');
@@ -219,12 +226,47 @@ document.querySelector('#couponForm').addEventListener('submit', async event => 
   const { error } = await supabase.from('coupons').insert({ code: String(data.code).trim().toUpperCase(), type: data.type, value: Number(data.value), active: true });
   if (error) showToast(error.message); else { event.target.reset(); showToast('Cupom criado.'); await loadAll(); }
 });
+
 document.querySelector('#settingsForm').addEventListener('submit', async event => {
   event.preventDefault(); const data = Object.fromEntries(new FormData(event.target));
   data.id = 1; data.free_shipping_from = valueOrNull(data.free_shipping_from);
   const { error } = await supabase.from('store_settings').upsert(data, { onConflict: 'id' });
-  if (error) showToast(error.message); else { document.querySelector('#settingsSaved').hidden = false; setTimeout(() => document.querySelector('#settingsSaved').hidden = true, 2000); await loadAll(); }
+  if (error) showToast(error.message); else {
+    document.querySelector('#settingsSaved').hidden = false;
+    setTimeout(() => document.querySelector('#settingsSaved').hidden = true, 2000);
+    showToast('Configurações salvas. A loja será atualizada na próxima sincronização.');
+    await loadAll();
+  }
 });
 
-supabase.auth.onAuthStateChange(() => initialize());
+passwordForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(passwordForm));
+  const password = String(data.newPassword || '');
+  const confirmation = String(data.confirmPassword || '');
+  if (password.length < 8) return showToast('A nova senha precisa ter pelo menos 8 caracteres.');
+  if (password !== confirmation) return showToast('As senhas não coincidem.');
+  const button = passwordForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    passwordForm.reset();
+    document.querySelector('#passwordSaved').hidden = false;
+    setTimeout(() => document.querySelector('#passwordSaved').hidden = true, 2500);
+    showToast('Senha administrativa atualizada.');
+  } catch (error) {
+    showToast(error.message || 'Não foi possível atualizar a senha.');
+  } finally { button.disabled = false; }
+});
+
+supabase.auth.onAuthStateChange(event => {
+  initialize().then(() => {
+    if (event === 'PASSWORD_RECOVERY') {
+      activateTab('settingsView');
+      showToast('Defina a nova senha em “Senha administrativa”.');
+      setTimeout(() => passwordForm?.elements?.newPassword?.focus(), 200);
+    }
+  });
+});
 initialize();
