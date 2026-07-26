@@ -71,10 +71,16 @@ function bindGlobalActions() {
 
     if (open) {
       lockedScrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.insetInline = '0';
+      document.body.style.width = '100%';
       document.body.style.top = `-${lockedScrollY}px`;
       document.body.classList.add('menu-open');
     } else {
       document.body.classList.remove('menu-open');
+      document.body.style.position = '';
+      document.body.style.insetInline = '';
+      document.body.style.width = '';
       document.body.style.top = '';
     }
 
@@ -102,6 +108,9 @@ function bindGlobalActions() {
 
   window.addEventListener('pagehide', () => {
     document.body.classList.remove('menu-open');
+    document.body.style.position = '';
+    document.body.style.insetInline = '';
+    document.body.style.width = '';
     document.body.style.top = '';
   });
 }
