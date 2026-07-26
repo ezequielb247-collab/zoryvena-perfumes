@@ -18,6 +18,7 @@
 - [[06 - Roadmap Técnico]]
 - [[07 - Deploy no Render]]
 - [[08 - Marca e INPI]]
+- [[09 - Identidade Visual]]
 - [[99 - Registro de Decisões]]
 
 ## Próximas ações

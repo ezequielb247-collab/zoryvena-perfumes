@@ -56,3 +56,7 @@ Crie um Static Site manualmente e configure:
 4. Revisar políticas com os dados reais da operação.
 5. Migrar o painel para Supabase ou outro backend.
 6. Integrar pagamento e frete.
+
+## Identidade visual
+
+A logo, os banners responsivos, o favicon e a imagem de compartilhamento estão em `assets/branding` e `assets/icons`. O banner usa uma versão para desktop e outra para celular por meio da tag `picture`.
