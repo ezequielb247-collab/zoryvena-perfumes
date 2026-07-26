@@ -1,4 +1,4 @@
-import { getCart, getFavorites, getCompare, getConfig, showToast, toggleFavorite, toggleCompare } from './store.js';
+import { getCart, getFavorites, getCompare, getConfig, showToast, toggleFavorite, toggleCompare, syncStoreData } from './store.js';
 
 function updateCounts() {
   const cartCount = getCart().reduce((sum, item) => sum + Number(item.quantity || 0), 0);
@@ -8,7 +8,8 @@ function updateCounts() {
 }
 function applyConfig() {
   const config = getConfig();
-  document.querySelectorAll('[data-store-whatsapp]').forEach(el => el.textContent = config.whatsapp === 'PREENCHER' ? 'WhatsApp a configurar' : config.whatsapp);
+  const formattedWhatsapp = String(config.whatsapp || '').replace(/^(55)(\d{2})(\d{5})(\d{4})$/, '+$1 ($2) $3-$4');
+  document.querySelectorAll('[data-store-whatsapp]').forEach(el => el.textContent = formattedWhatsapp || 'WhatsApp a configurar');
   document.querySelectorAll('[data-store-instagram]').forEach(el => el.textContent = config.instagram);
   document.querySelectorAll('[data-current-year]').forEach(el => el.textContent = new Date().getFullYear());
 }
@@ -26,3 +27,14 @@ function bindGlobalActions() {
 }
 window.addEventListener('zoryvena:state', updateCounts);
 updateCounts(); applyConfig(); bindGlobalActions();
+
+syncStoreData().then(changed => {
+  if (!changed) return;
+  const reloadKey = `zoryvena.synced.${location.pathname}`;
+  if (!sessionStorage.getItem(reloadKey)) {
+    sessionStorage.setItem(reloadKey, '1');
+    location.reload();
+  } else {
+    applyConfig();
+  }
+});
