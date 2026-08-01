@@ -4,7 +4,7 @@ function loadMobileFixes() {
   if (document.querySelector('link[data-zoryvena-mobile-fixes]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/mobile-fixes.css?v=20260801-2';
+  link.href = '/assets/css/mobile-fixes.css?v=20260801-3';
   link.dataset.zoryvenaMobileFixes = 'true';
   document.head.appendChild(link);
 }
