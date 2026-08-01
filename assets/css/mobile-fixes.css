@@ -1,3 +1,26 @@
+/* Condições de pagamento */
+.product-card-body .installment-price,
+.product-card-body .pix-price,
+.product-card-body .availability-price{
+  display:block;
+  min-height:0;
+  margin-top:3px;
+  line-height:1.35;
+}
+.product-card-body .installment-price{color:#5f574f;font-weight:650}
+.product-card-body .pix-price{color:#24613e;font-weight:800}
+.product-card-body .availability-price{margin-top:7px;color:#776f67}
+.price-block .installment-price,
+.price-block .pix-price{
+  display:block;
+  margin-top:5px;
+  font-size:14px;
+  line-height:1.4;
+}
+.price-block .installment-price{color:#d7d0c6}
+.price-block .pix-price{color:#7fd3a1;font-weight:800}
+.price-block>small{display:block;margin-top:10px}
+
 /* Explicação da evolução olfativa */
 .notes-section .section-heading{max-width:860px}
 .notes-section .section-heading>p{max-width:780px;font-size:15px;line-height:1.7}
@@ -18,6 +41,13 @@
   main {
     overflow: visible;
   }
+
+  .product-card-body .product-price{font-size:21px}
+  .product-card-body .installment-price,
+  .product-card-body .pix-price{font-size:12px}
+  .price-block>strong{font-size:29px}
+  .price-block .installment-price,
+  .price-block .pix-price{font-size:15px}
 
   .notes-section .section-heading>p{
     font-size:14px;
