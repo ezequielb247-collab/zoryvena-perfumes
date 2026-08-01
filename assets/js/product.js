@@ -1,4 +1,4 @@
-import { getProduct, addToCart, isAvailable, priceText, productWhatsapp, getProducts, showToast } from './store.js';
+import { getProduct, addToCart, isAvailable, priceText, installmentText, pixPriceText, availabilityText, productWhatsapp, getProducts, showToast } from './store.js';
 import { media, productCard, escapeHtml } from './components.js';
 
 const id = document.body.dataset.productId;
@@ -22,6 +22,8 @@ if (!product) {
   const topNotes = product.topNotes || product.notes?.top;
   const heartNotes = product.heartNotes || product.notes?.heart;
   const baseNotes = product.baseNotes || product.notes?.base;
+  const installments = installmentText(product);
+  const pix = pixPriceText(product);
 
   document.title = `${product.name} ${product.brand} | Zoryvena Perfumes`;
   container.innerHTML = `<div class="product-detail-grid">
@@ -29,7 +31,12 @@ if (!product) {
     <section class="product-detail-copy">
       <span class="eyebrow">${escapeHtml(product.brand)} · ${escapeHtml(product.gender)}</span>
       <h1>${escapeHtml(product.name)}</h1><p class="lead">${escapeHtml(product.description)}</p>
-      <div class="price-block"><strong>${escapeHtml(priceText(product))}</strong><small>${isAvailable(product) ? `${product.stock} unidades disponíveis` : 'Valor e estoque sob consulta'}</small></div>
+      <div class="price-block">
+        <strong>${escapeHtml(priceText(product))}</strong>
+        ${installments ? `<span class="installment-price">${escapeHtml(installments)}</span>` : ''}
+        ${pix ? `<span class="pix-price">${escapeHtml(pix)}</span>` : ''}
+        <small>${escapeHtml(availabilityText(product))}</small>
+      </div>
       <div class="detail-actions">
         ${isAvailable(product) ? '<button class="button button-gold" id="addProduct">Adicionar ao carrinho</button>' : `<a class="button button-gold" target="_blank" rel="noopener" href="${productWhatsapp(product)}">Consultar pelo WhatsApp</a>`}
         <button class="button button-outline" data-favorite="${product.id}">♡ Favoritar</button>
