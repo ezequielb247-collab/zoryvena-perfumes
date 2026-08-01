@@ -1,0 +1,235 @@
+/* Acabamento profissional global — Zoryvena Perfumes */
+:root{
+  --zoryvena-focus:rgba(212,166,77,.24);
+  --zoryvena-card:#101216;
+  --zoryvena-card-soft:#15171b;
+  --zoryvena-border:rgba(212,166,77,.24);
+  --zoryvena-border-strong:rgba(212,166,77,.52);
+  --zoryvena-muted:#b9b0a4;
+  --zoryvena-success:#8dd3a6;
+}
+
+html{scroll-padding-top:110px}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button,input,textarea,select{font:inherit}
+button,.button,.icon-link,.product-card,a{transition:transform .18s ease,border-color .18s ease,background-color .18s ease,color .18s ease,box-shadow .18s ease,opacity .18s ease}
+
+:where(a,button,input,textarea,select):focus-visible{
+  outline:2px solid var(--premium-gold,#d4a64d);
+  outline-offset:3px;
+}
+
+.announcement-bar{
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 18px;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-align:center;
+}
+
+.site-header{
+  transition:background-color .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.site-header.is-scrolled{
+  background:rgba(4,4,5,.96)!important;
+  border-bottom-color:rgba(212,166,77,.22)!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.28);
+}
+.desktop-nav a:hover{color:var(--premium-gold,#d4a64d)}
+.icon-link:hover{transform:translateY(-2px);border-color:var(--zoryvena-border-strong);background:#15120d}
+
+.button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.button:active:not(:disabled){transform:translateY(0)}
+.button:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.button-gold:hover:not(:disabled){filter:brightness(1.06)}
+
+.product-card:hover{border-color:var(--zoryvena-border-strong);box-shadow:0 22px 52px rgba(0,0,0,.26)}
+.product-card-actions .button{min-width:112px}
+
+.site-footer a:hover{color:#fff;transform:translateX(2px)}
+.footer-bottom{align-items:center}
+
+/* Formulários */
+.form-card,.summary-card{
+  border-color:var(--zoryvena-border)!important;
+  box-shadow:0 26px 58px rgba(0,0,0,.22);
+}
+.form-card h2,.summary-card h2{letter-spacing:-.02em}
+.form-grid{gap:18px}
+.form-field span,.choice-fieldset legend{
+  color:#e6d8bf;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.form-field input,.form-field textarea,.form-field select{
+  width:100%;
+  min-height:50px;
+  padding:12px 14px;
+  border:1px solid rgba(212,166,77,.22)!important;
+  border-radius:14px;
+  background:#08090c!important;
+  color:#fff!important;
+  caret-color:var(--premium-gold,#d4a64d);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.form-field textarea{min-height:116px;resize:vertical}
+.form-field input::placeholder,.form-field textarea::placeholder{color:#77726b}
+.form-field input:hover,.form-field textarea:hover,.form-field select:hover{border-color:rgba(212,166,77,.42)!important}
+.form-field input:focus,.form-field textarea:focus,.form-field select:focus{
+  border-color:var(--premium-gold,#d4a64d)!important;
+  box-shadow:0 0 0 4px var(--zoryvena-focus);
+  outline:0;
+}
+.form-field input[readonly]{background:#0e1013!important;color:#d9d2c7!important;cursor:default}
+.form-field input:disabled{opacity:.62;cursor:not-allowed}
+
+/* Checkout */
+.checkout-layout{
+  width:min(1540px,100%);
+  margin-inline:auto;
+  grid-template-columns:minmax(0,1fr) 340px;
+  gap:30px;
+}
+.checkout-summary{top:116px}
+.checkout-items li{align-items:flex-start;padding:13px 0}
+.checkout-items li span{max-width:70%;color:#ece6dc}
+.checkout-items li strong{white-space:nowrap}
+.summary-line{gap:18px;align-items:flex-start}
+.summary-line>span:last-child,.summary-line>strong:last-child{text-align:right}
+
+.checkout-section-title{
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:8px 0 -2px;
+  color:#f3ede3;
+  font:600 19px/1.2 var(--serif);
+}
+.checkout-section-title:after{content:'';height:1px;flex:1;background:linear-gradient(90deg,rgba(212,166,77,.34),transparent)}
+
+.choice-fieldset{
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+}
+.choice-fieldset.full{grid-column:1/-1}
+.choice-fieldset legend{margin-bottom:9px;padding:0}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.choice-card{position:relative;display:block;cursor:pointer}
+.choice-card>input{position:absolute;opacity:0;pointer-events:none}
+.choice-card-content{
+  position:relative;
+  display:flex;
+  align-items:flex-start;
+  gap:13px;
+  min-height:92px;
+  padding:16px;
+  border:1px solid var(--zoryvena-border);
+  border-radius:18px;
+  background:linear-gradient(145deg,#111317,#0a0c0f);
+  box-shadow:0 12px 28px rgba(0,0,0,.13);
+}
+.choice-card-content:before{
+  content:'';
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  margin-top:2px;
+  border:1px solid rgba(212,166,77,.48);
+  border-radius:50%;
+  box-shadow:inset 0 0 0 4px #0c0e11;
+}
+.choice-card-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.choice-card-copy strong{color:#f5eee3;font-size:14px;line-height:1.25}
+.choice-card-copy small{color:var(--zoryvena-muted);font-size:11px;line-height:1.45}
+.choice-card:hover .choice-card-content{border-color:var(--zoryvena-border-strong);transform:translateY(-1px)}
+.choice-card>input:focus-visible+.choice-card-content{outline:2px solid var(--premium-gold,#d4a64d);outline-offset:3px}
+.choice-card>input:checked+.choice-card-content{
+  border-color:var(--premium-gold,#d4a64d);
+  background:linear-gradient(145deg,#211a0f,#101216 62%);
+  box-shadow:0 0 0 3px rgba(212,166,77,.1),0 18px 34px rgba(0,0,0,.2);
+}
+.choice-card>input:checked+.choice-card-content:before{background:var(--premium-gold,#d4a64d);box-shadow:inset 0 0 0 4px #15100a}
+.choice-badge{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  margin-top:4px;
+  padding:3px 7px;
+  border:1px solid rgba(141,211,166,.25);
+  border-radius:999px;
+  color:var(--zoryvena-success);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.address-fields{
+  grid-column:1/-1;
+  padding:18px;
+  border:1px solid rgba(212,166,77,.17);
+  border-radius:20px;
+  background:linear-gradient(145deg,rgba(18,20,24,.86),rgba(8,9,12,.9));
+}
+.address-fields[hidden]{display:none!important}
+.address-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.address-grid .full{grid-column:1/-1}
+.address-grid .state-field{max-width:160px}
+.cep-row{display:grid;grid-template-columns:minmax(180px,.55fr) 1fr;gap:16px;align-items:end}
+.cep-status{
+  min-height:22px;
+  display:flex;
+  align-items:center;
+  margin:0;
+  color:var(--zoryvena-muted);
+  font-size:11px;
+  line-height:1.4;
+}
+.cep-status[data-state="loading"]{color:#e4c98e}
+.cep-status[data-state="success"]{color:var(--zoryvena-success)}
+.cep-status[data-state="error"]{color:#ff9d92}
+
+.checkout-security-line{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:16px 0 0;
+  color:#bfb6a9;
+  font-size:11px;
+}
+.checkout-security-line:before{content:'✓';display:grid;place-items:center;width:18px;height:18px;border:1px solid rgba(141,211,166,.35);border-radius:50%;color:var(--zoryvena-success);font-weight:900}
+
+.test-environment-note{box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+
+@media(max-width:1100px){
+  .checkout-layout{grid-template-columns:1fr;max-width:980px}
+  .checkout-summary{position:static}
+}
+
+@media(max-width:650px){
+  html{scroll-padding-top:90px}
+  .announcement-bar{font-size:11px;line-height:1.35}
+  .form-card,.summary-card{border-radius:18px!important}
+  .form-card{padding:22px 16px!important}
+  .form-grid{gap:14px}
+  .choice-grid,.address-grid,.cep-row{grid-template-columns:1fr}
+  .choice-card-content{min-height:84px;padding:14px}
+  .address-fields{padding:15px}
+  .address-grid .state-field{max-width:none}
+  .checkout-section-title{font-size:18px}
+  .checkout-layout{padding-inline:14px!important}
+  .product-card-actions{align-items:stretch;flex-direction:column}
+  .product-card-actions .button{width:100%}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
