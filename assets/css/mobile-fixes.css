@@ -32,6 +32,58 @@
 .note-stage .note-ingredients{padding-top:17px;border-top:1px solid rgba(212,166,77,.18);color:#eee8de;font-size:13px;line-height:1.6}
 .note-stage .note-ingredients strong{display:block;margin-bottom:4px;color:var(--premium-gold-soft);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
 
+/* Carrinho */
+.cart-item-copy strong{display:block;margin-top:9px;font-size:17px}
+.quantity-block{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:190px}
+.quantity{
+  display:inline-flex;align-items:center;gap:8px;padding:7px;
+  border:1px solid rgba(212,166,77,.28);border-radius:999px;
+  background:#0d0f12;box-shadow:0 12px 28px rgba(0,0,0,.18)
+}
+.quantity-button{
+  display:grid;place-items:center;width:40px;height:40px;padding:0;
+  border:1px solid rgba(212,166,77,.28);border-radius:50%;
+  background:#17191d;color:#f7f1e7;font-size:20px;font-weight:700;
+  cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease,opacity .18s ease
+}
+.quantity-button:hover:not(:disabled){transform:translateY(-1px);border-color:var(--premium-gold);background:#211b11}
+.quantity-button:disabled{opacity:.34;cursor:not-allowed}
+.quantity-input{
+  width:54px!important;height:40px!important;padding:0!important;border:0!important;
+  background:transparent!important;color:#fff!important;text-align:center;font-weight:800;
+  appearance:textfield;-moz-appearance:textfield
+}
+.quantity-input::-webkit-outer-spin-button,.quantity-input::-webkit-inner-spin-button{appearance:none;margin:0}
+.quantity-helper{max-width:190px;color:#b7aea2;font-size:11px;line-height:1.35;text-align:center}
+.remove-link{
+  padding:10px 14px!important;border:1px solid rgba(255,139,126,.28)!important;
+  border-radius:999px!important;background:transparent!important;color:#ff9d92!important
+}
+.remove-link:hover{background:rgba(255,139,126,.08)!important;border-color:rgba(255,139,126,.52)!important}
+.delivery-summary>span:last-child{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.delivery-summary small{color:#8dd3a6;font-size:10px;font-weight:700}
+
+/* Checkout */
+.summary-card,.form-card{border-radius:22px;overflow:hidden}
+.form-card{box-shadow:0 22px 48px rgba(0,0,0,.2)}
+.field-card{
+  padding:15px;border:1px solid rgba(212,166,77,.22);border-radius:18px;
+  background:linear-gradient(145deg,#111317,#0b0d10)
+}
+.field-card select{border-radius:13px!important;background-color:#080a0d!important}
+.field-hint,.checkout-hint{display:block;margin-top:8px;color:#b9b0a4;font-size:11px;line-height:1.5}
+.form-field select{
+  appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--premium-gold) 50%),linear-gradient(135deg,var(--premium-gold) 50%,transparent 50%);
+  background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px);
+  background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:44px
+}
+.checkout-summary .summary-line strong{color:#f4ead7}
+.test-environment-note{
+  margin-top:16px!important;padding:13px 14px;border:1px solid rgba(212,166,77,.22);
+  border-radius:14px;background:#19150d;color:#dfcfae!important;font-size:11px!important;line-height:1.5
+}
+
 /* Ajustes móveis complementares da Zoryvena */
 @media (max-width: 650px) {
   body {
@@ -101,6 +153,14 @@
   .section:has(.notes-grid) {
     padding-bottom: calc(138px + env(safe-area-inset-bottom, 0px)) !important;
   }
+
+  .cart-item{gap:14px!important}
+  .quantity-block{grid-column:2;align-items:flex-start;min-width:0;width:100%}
+  .quantity-helper{max-width:none;text-align:left}
+  .remove-link{grid-column:2;justify-self:start;margin-top:2px}
+  .delivery-summary>span:last-child{max-width:170px}
+  .field-card{padding:13px}
+  .checkout-layout{gap:18px!important}
 
   .mobile-bottom-nav {
     min-height: 86px;
