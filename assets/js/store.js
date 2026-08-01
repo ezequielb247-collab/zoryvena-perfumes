@@ -54,6 +54,18 @@ export function getProduct(id) { return getProducts().find(product => product.id
 export function isPriced(product) { return Number.isFinite(Number(product?.price)) && Number(product.price) > 0; }
 export function isAvailable(product) { return isPriced(product) && Number(product.stock) > 0; }
 export function priceText(product) { return isPriced(product) ? money.format(Number(product.price)) : 'Consulte o valor'; }
+export function installmentText(product, installments = 3) {
+  if (!isPriced(product)) return '';
+  return `${installments}x de ${money.format(Number(product.price) / installments)} sem juros`;
+}
+export function pixPriceText(product) {
+  const value = Number(product?.pixPrice);
+  return Number.isFinite(value) && value > 0 ? `${money.format(value)} no Pix` : '';
+}
+export function availabilityText(product) {
+  if (Number(product?.stock) > 0) return `${product.stock} em estoque`;
+  return isPriced(product) ? 'Estoque sob consulta' : 'Consulte disponibilidade';
+}
 export function productUrl(product) { return `/produto/${product.id}/`; }
 export function productImage(product) {
   if (!product?.image) return '';
