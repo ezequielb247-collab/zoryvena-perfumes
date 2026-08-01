@@ -103,6 +103,23 @@ function applyConfig() {
   });
 }
 
+function polishPublicCopy() {
+  const replacements = new Map([
+    ['Os perfumes são originais?', 'A Zoryvena seleciona produtos com procedência verificada e mantém controle interno de fornecedor, lote e origem.'],
+    ['Como funcionará a entrega?', 'A retirada em Macaé é gratuita. Para entrega, o frete é consultado e confirmado antes do envio. Compras acima do valor indicado no topo do site recebem frete grátis.'],
+    ['Quero consultar preço e estoque', 'Cada produto mostra preço normal, condição no Pix, parcelamento e disponibilidade. Quando a quantidade estiver sob consulta, fale com a equipe pelo WhatsApp.'],
+  ]);
+
+  document.querySelectorAll('.faq details').forEach(detail => {
+    const summary = detail.querySelector('summary');
+    const paragraph = detail.querySelector('p');
+    const replacement = replacements.get(summary?.textContent?.trim());
+    if (!replacement || !paragraph) return;
+    if (summary.textContent.trim() === 'Como funcionará a entrega?') summary.textContent = 'Como funciona a entrega?';
+    paragraph.textContent = replacement;
+  });
+}
+
 function normalizePath(path) {
   const clean = String(path || '/').split('?')[0].replace(/index\.html$/, '').replace(/\/+$/, '');
   return clean || '/';
@@ -205,6 +222,7 @@ function bindGlobalActions() {
 
 loadEnhancementStyles();
 updateActiveNavigation();
+polishPublicCopy();
 bindHeaderScroll();
 window.addEventListener('zoryvena:state', updateCounts);
 window.addEventListener('zoryvena:data', applyConfig);
