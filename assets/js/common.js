@@ -1,12 +1,17 @@
 import { getCart, getFavorites, getCompare, getConfig, showToast, toggleFavorite, toggleCompare, syncStoreData } from './store.js';
 
-function loadMobileFixes() {
-  if (document.querySelector('link[data-zoryvena-mobile-fixes]')) return;
+function loadStylesheet(href, attribute) {
+  if (document.querySelector(`link[${attribute}]`)) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/mobile-fixes.css?v=20260801-3';
-  link.dataset.zoryvenaMobileFixes = 'true';
+  link.href = href;
+  link.setAttribute(attribute, '');
   document.head.appendChild(link);
+}
+
+function loadEnhancementStyles() {
+  loadStylesheet('/assets/css/mobile-fixes.css?v=20260801-3', 'data-zoryvena-mobile-fixes');
+  loadStylesheet('/assets/css/professional-polish.css?v=20260801-1', 'data-zoryvena-professional-polish');
 }
 
 function updateCounts() {
@@ -31,9 +36,17 @@ function whatsappContactUrl(number) {
   return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}` : '';
 }
 
+function instagramUrl(handle) {
+  const username = String(handle || '').trim().replace(/^@/, '');
+  return username ? `https://instagram.com/${username}` : '';
+}
+
 function applyConfig() {
   const config = getConfig();
   const whatsappUrl = whatsappContactUrl(config.whatsapp);
+  const instagram = String(config.instagram || '@zoryvenaperfumes');
+  const instagramLink = instagramUrl(instagram);
+  const email = String(config.email || '').trim();
 
   document.querySelectorAll('[data-store-whatsapp]').forEach(el => {
     if (!whatsappUrl) {
@@ -53,8 +66,22 @@ function applyConfig() {
     el.innerHTML = `<a class="button button-outline" href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" aria-label="Falar com a Zoryvena pelo WhatsApp">Falar pelo WhatsApp</a>`;
   });
 
-  document.querySelectorAll('[data-store-instagram]').forEach(el => el.textContent = config.instagram);
-  document.querySelectorAll('[data-store-email]').forEach(el => el.textContent = config.email || 'E-mail a configurar');
+  document.querySelectorAll('[data-store-instagram]').forEach(el => {
+    if (!instagramLink) {
+      el.textContent = instagram;
+      return;
+    }
+    el.innerHTML = `<a href="${instagramLink}" target="_blank" rel="noopener noreferrer" aria-label="Abrir Instagram da Zoryvena">${instagram}</a>`;
+  });
+
+  document.querySelectorAll('[data-store-email]').forEach(el => {
+    if (!email) {
+      el.textContent = 'E-mail indisponível';
+      return;
+    }
+    el.innerHTML = `<a href="mailto:${email}">${email}</a>`;
+  });
+
   document.querySelectorAll('[data-current-year]').forEach(el => el.textContent = new Date().getFullYear());
 
   document.querySelectorAll('.announcement-bar, [data-free-shipping]').forEach(el => {
@@ -66,6 +93,37 @@ function applyConfig() {
       el.hidden = true;
     }
   });
+
+  document.querySelectorAll('.footer-bottom').forEach(footer => {
+    const finalText = footer.lastElementChild;
+    if (finalText && /preenchid|lançamento|configur/i.test(finalText.textContent || '')) {
+      finalText.textContent = 'Compra segura, atendimento personalizado e retirada gratuita em Macaé.';
+    }
+  });
+}
+
+function normalizePath(path) {
+  const clean = String(path || '/').split('?')[0].replace(/index\.html$/, '').replace(/\/+$/, '');
+  return clean || '/';
+}
+
+function updateActiveNavigation() {
+  const current = normalizePath(location.pathname);
+  document.querySelectorAll('.desktop-nav a, .mobile-menu a, .mobile-bottom-nav a').forEach(link => {
+    const target = normalizePath(new URL(link.href, location.origin).pathname);
+    const active = target === current || (target !== '/' && current.startsWith(`${target}/`));
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+
+function bindHeaderScroll() {
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+  const update = () => header.classList.toggle('is-scrolled', window.scrollY > 12);
+  update();
+  window.addEventListener('scroll', update, { passive: true });
 }
 
 function bindGlobalActions() {
@@ -126,19 +184,15 @@ function bindGlobalActions() {
   }
 
   menuButton.addEventListener('click', () => setMenu(menu.hidden));
-
   menu.addEventListener('click', event => {
     if (event.target === menu || event.target.closest('a')) setMenu(false);
   });
-
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !menu.hidden) setMenu(false);
   });
-
   window.addEventListener('resize', () => {
     if (window.innerWidth > 650 && !menu.hidden) setMenu(false);
   });
-
   window.addEventListener('pagehide', () => {
     document.body.classList.remove('menu-open');
     document.body.style.position = '';
@@ -148,7 +202,9 @@ function bindGlobalActions() {
   });
 }
 
-loadMobileFixes();
+loadEnhancementStyles();
+updateActiveNavigation();
+bindHeaderScroll();
 window.addEventListener('zoryvena:state', updateCounts);
 window.addEventListener('zoryvena:data', applyConfig);
 updateCounts();
