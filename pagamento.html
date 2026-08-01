@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#050505">
+  <title>Resultado do pagamento | Zoryvena Perfumes</title>
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/premium.css">
+</head>
+<body>
+  <div class="announcement-bar">Pagamento seguro com Mercado Pago</div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Zoryvena Perfumes — página inicial"><img class="brand-logo" src="/assets/branding/logo-horizontal-dark.png" alt="Zoryvena Perfumes"></a>
+    <div class="header-actions"><a class="icon-link" href="/carrinho.html" aria-label="Carrinho">🛍<span data-cart-count>0</span></a></div>
+  </header>
+
+  <main>
+    <section class="section" style="min-height:65vh;display:grid;place-items:center">
+      <article class="summary-card" style="width:min(680px,100%);text-align:center;padding:clamp(28px,6vw,64px)">
+        <span class="eyebrow" id="paymentEyebrow">Resultado do pagamento</span>
+        <h1 id="paymentTitle">Verificando retorno...</h1>
+        <p id="paymentMessage">Aguarde enquanto organizamos as informações do pedido.</p>
+        <p id="paymentOrder"></p>
+        <div class="detail-actions" style="justify-content:center;margin-top:28px">
+          <a class="button button-gold" id="paymentPrimary" href="/catalogo.html">Voltar ao catálogo</a>
+          <a class="button button-outline" id="paymentWhatsapp" href="/contato.html">Falar com a Zoryvena</a>
+        </div>
+        <p style="margin-top:24px;font-size:12px">Ambiente de teste: nenhuma cobrança real é realizada.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand"><img class="footer-logo" src="/assets/branding/logo-square-clean.png" alt="Logo Zoryvena Perfumes"><div><strong>ZORYVENA PERFUMES</strong><p>Sua presença começa pela fragrância.</p></div></div>
+    <div><h3>Atendimento</h3><p data-store-whatsapp>WhatsApp a configurar</p><p data-store-email>zoryvenaperfumes@gmail.com</p></div>
+    <div class="footer-bottom"><span>© <span data-current-year></span> Zoryvena Perfumes.</span></div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/assets/js/common.js"></script>
+  <script type="module" src="/assets/js/payment-return.js"></script>
+</body>
+</html>
