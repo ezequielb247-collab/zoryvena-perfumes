@@ -108,6 +108,16 @@
 .site-footer [data-store-instagram] a:hover,
 .site-footer [data-store-email] a:hover{color:#fff}
 
+@media(min-width:651px){
+  .address-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  .address-grid .full{grid-column:1/-1}
+  .address-grid label:has(input[name="number"]){grid-column:span 2}
+  .address-grid label:has(input[name="complement"]){grid-column:span 4}
+  .address-grid label:has(input[name="neighborhood"]){grid-column:span 3}
+  .address-grid label:has(input[name="city"]){grid-column:span 2}
+  .address-grid label:has(input[name="state"]){grid-column:span 1;max-width:none}
+}
+
 @media(max-width:650px){
   .filter-panel{border-radius:18px;padding:18px!important}
   .catalog-topbar{align-items:flex-start;gap:8px;flex-direction:column}
