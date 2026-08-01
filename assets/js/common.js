@@ -12,6 +12,7 @@ function loadStylesheet(href, attribute) {
 function loadEnhancementStyles() {
   loadStylesheet('/assets/css/mobile-fixes.css?v=20260801-3', 'data-zoryvena-mobile-fixes');
   loadStylesheet('/assets/css/professional-polish.css?v=20260801-1', 'data-zoryvena-professional-polish');
+  loadStylesheet('/assets/css/site-review.css?v=20260801-1', 'data-zoryvena-site-review');
 }
 
 function updateCounts() {
