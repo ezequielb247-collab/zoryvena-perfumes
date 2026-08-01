@@ -91,7 +91,14 @@ export function updateCart(id, quantity) {
 }
 export function removeFromCart(id) { saveCart(getCart().filter(item => item.id !== id)); }
 export function cartDetails() { return getCart().map(item => ({ ...item, product: getProduct(item.id) })).filter(item => item.product); }
-export function cartTotal() { return cartDetails().reduce((total, item) => total + Number(item.product.price || 0) * item.quantity, 0); }
+export function productPriceForPayment(product, paymentMethod = 'card') {
+  const pixPrice = Number(product?.pixPrice);
+  if (paymentMethod === 'pix' && Number.isFinite(pixPrice) && pixPrice > 0) return pixPrice;
+  return Number(product?.price || 0);
+}
+export function cartTotal(paymentMethod = 'card') {
+  return cartDetails().reduce((total, item) => total + productPriceForPayment(item.product, paymentMethod) * item.quantity, 0);
+}
 
 export function getFavorites() { return load(KEYS.favorites, []); }
 export function toggleFavorite(id) {
@@ -117,18 +124,34 @@ export function productWhatsapp(product) { return whatsappUrl(`Olá! Gostaria de
 
 export async function createOrder(data) {
   const items = cartDetails().map(item => ({ id: item.id, quantity: item.quantity }));
+  const paymentMethod = data.payment === 'pix' ? 'pix' : 'card';
   const { data: result, error } = await supabase.functions.invoke('create-order', {
-    body: { customer: data, items, notes: data.notes || null },
+    body: { customer: data, items, notes: data.notes || null, paymentMethod },
   });
-  if (error) throw error;
+  if (error) {
+    let details = error.message;
+    try {
+      const response = error.context;
+      if (response && typeof response.json === 'function') {
+        const body = await response.json();
+        details = body?.error || details;
+      }
+    } catch { /* mantém a mensagem original */ }
+    throw new Error(details || 'Não foi possível iniciar o pagamento.');
+  }
   if (result?.error) throw new Error(result.error);
-  saveCart([]);
-  return {
+  const order = {
     id: result.orderCode,
     databaseId: result.id,
     total: Number(result.total || 0),
+    paymentMethod,
+    paymentUrl: result.paymentUrl,
+    preferenceId: result.preferenceId,
+    environment: result.environment,
     ...data,
   };
+  sessionStorage.setItem('zoryvena.last-order', JSON.stringify(order));
+  return order;
 }
 
 export function getOrders() { return load(KEYS.orders, []); }
