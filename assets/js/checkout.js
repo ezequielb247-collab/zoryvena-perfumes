@@ -4,42 +4,47 @@ const form = document.querySelector('#checkoutForm');
 const empty = document.querySelector('#checkoutEmpty');
 const content = document.querySelector('#checkoutContent');
 const paymentSelect = form?.elements?.payment;
+const deliverySelect = form?.elements?.delivery;
 const items = cartDetails();
 
 function selectedPaymentMethod() {
   return paymentSelect?.value === 'pix' ? 'pix' : 'card';
 }
 
+function selectedDeliveryMethod() {
+  return deliverySelect?.value === 'pickup' ? 'pickup' : 'shipping';
+}
+
 function renderSummary() {
   const paymentMethod = selectedPaymentMethod();
-  document.querySelector('#checkoutItems').innerHTML = items.map(item => {
+  const deliveryMethod = selectedDeliveryMethod();
+  const checkoutItems = document.querySelector('#checkoutItems');
+  const checkoutTotal = document.querySelector('#checkoutTotal');
+  const checkoutDelivery = document.querySelector('#checkoutDelivery');
+  const deliveryNote = document.querySelector('#deliverySummaryNote');
+
+  checkoutItems.innerHTML = items.map(item => {
     const unitPrice = productPriceForPayment(item.product, paymentMethod);
     return `<li><span>${item.quantity}× ${item.product.brand} ${item.product.name}</span><strong>${money.format(unitPrice * item.quantity)}</strong></li>`;
   }).join('');
-  document.querySelector('#checkoutTotal').textContent = money.format(cartTotal(paymentMethod));
+
+  checkoutTotal.textContent = money.format(cartTotal(paymentMethod));
+
+  if (deliveryMethod === 'pickup') {
+    checkoutDelivery.textContent = 'Grátis';
+    deliveryNote.textContent = 'Retirada gratuita em Macaé. O local e o horário serão confirmados no atendimento.';
+  } else {
+    checkoutDelivery.textContent = 'Sob consulta';
+    deliveryNote.textContent = 'O frete será calculado e confirmado antes do envio. Ele ainda não está incluído no total parcial.';
+  }
 }
 
 if (!items.length) {
   content.hidden = true;
   empty.hidden = false;
 } else {
-  if (paymentSelect) {
-    paymentSelect.innerHTML = `
-      <option value="pix">Pix com desconto</option>
-      <option value="card">Cartão em até 3x sem juros</option>
-    `;
-    paymentSelect.addEventListener('change', renderSummary);
-  }
-
-  const button = form?.querySelector('button[type="submit"]');
-  if (button) button.textContent = 'Ir para pagamento seguro';
-
-  const intro = document.querySelector('.catalog-hero .section-heading p');
-  if (intro) intro.textContent = 'Preencha seus dados e siga para o ambiente seguro do Mercado Pago.';
-
-  const summaryNote = document.querySelector('.summary-card > p');
-  if (summaryNote) summaryNote.textContent = 'Integração em ambiente de teste. Nenhum valor real será cobrado nesta etapa.';
-
+  paymentSelect?.addEventListener('change', renderSummary);
+  deliverySelect?.addEventListener('change', renderSummary);
   renderSummary();
 }
 
@@ -55,6 +60,7 @@ form?.addEventListener('submit', async event => {
 
   try {
     const data = Object.fromEntries(new FormData(form));
+    data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada em Macaé — grátis' : 'Consultar frete';
     const order = await createOrder(data);
     if (!order.paymentUrl) throw new Error('O endereço de pagamento não foi gerado.');
     location.href = order.paymentUrl;
