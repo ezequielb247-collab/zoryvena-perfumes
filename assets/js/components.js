@@ -1,4 +1,4 @@
-import { getFavorites, getCompare, priceText, productImage, productUrl, isAvailable, productWhatsapp } from './store.js';
+import { getFavorites, getCompare, priceText, installmentText, pixPriceText, availabilityText, productImage, productUrl, isAvailable, productWhatsapp } from './store.js';
 
 export function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
 
@@ -10,6 +10,8 @@ export function media(product, size = '') {
 
 export function productCard(product, options = {}) {
   const favorites = getFavorites(); const compare = getCompare();
+  const installments = installmentText(product);
+  const pix = pixPriceText(product);
   return `<article class="product-card" data-id="${escapeHtml(product.id)}">
     ${product.badge ? `<span class="product-badge">${escapeHtml(product.badge)}</span>` : ''}
     <button class="favorite-button ${favorites.includes(product.id) ? 'active' : ''}" data-favorite="${escapeHtml(product.id)}" aria-label="Adicionar ${escapeHtml(product.name)} aos favoritos">${favorites.includes(product.id) ? '♥' : '♡'}</button>
@@ -19,7 +21,9 @@ export function productCard(product, options = {}) {
       <h3><a href="${productUrl(product)}">${escapeHtml(product.name)}</a></h3>
       <p>${escapeHtml(product.family)} · ${escapeHtml(product.occasion)}</p>
       <strong class="product-price">${escapeHtml(priceText(product))}</strong>
-      <small>${isAvailable(product) ? `${product.stock} em estoque` : 'Consulte disponibilidade'}</small>
+      ${installments ? `<small class="installment-price">${escapeHtml(installments)}</small>` : ''}
+      ${pix ? `<small class="pix-price">${escapeHtml(pix)}</small>` : ''}
+      <small class="availability-price">${escapeHtml(availabilityText(product))}</small>
       <div class="product-card-actions">
         <a class="button button-dark" href="${productUrl(product)}">Ver perfume</a>
         <label class="compare-check"><input type="checkbox" data-compare="${escapeHtml(product.id)}" ${compare.includes(product.id) ? 'checked' : ''}> Comparar</label>
