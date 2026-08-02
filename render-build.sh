@@ -6,21 +6,40 @@ fail_build() {
   exit 1
 }
 
-# Impede que padrões perigosos voltem ao HTML público.
-if grep -RInE --include='*.html' --exclude-dir=.git --exclude-dir=dist \
-  '\son[a-zA-Z]+[[:space:]]*=' .; then
+# Impede que atributos de eventos JavaScript voltem ao HTML público.
+inline_event_matches="$(
+  grep -RInE --include='*.html' --exclude-dir=.git --exclude-dir=dist \
+    '\son[a-zA-Z]+[[:space:]]*=' . || true
+)"
+if [[ -n "$inline_event_matches" ]]; then
+  printf '%s\n' "$inline_event_matches" >&2
   fail_build 'atributo de evento inline encontrado no HTML.'
 fi
 
-if grep -RInE --include='*.html' --exclude-dir=.git --exclude-dir=dist \
-  '<script([^>]*)>[[:space:]]*[^<[:space:]]' .; then
-  fail_build 'script inline encontrado no HTML.'
+# Bloqueia JavaScript executável inline, mas permite JSON-LD não executável usado no SEO.
+inline_script_matches="$(
+  grep -RInE --include='*.html' --exclude-dir=.git --exclude-dir=dist \
+    '<script([^>]*)>[[:space:]]*[^<[:space:]]' . || true
+)"
+if [[ -n "$inline_script_matches" ]]; then
+  unsafe_inline_scripts="$(
+    printf '%s\n' "$inline_script_matches" \
+      | grep -vE 'type=["'"'"']application/ld\+json["'"'"']' || true
+  )"
+  if [[ -n "$unsafe_inline_scripts" ]]; then
+    printf '%s\n' "$unsafe_inline_scripts" >&2
+    fail_build 'script executável inline encontrado no HTML.'
+  fi
 fi
 
 # Bloqueia formatos comuns de chave privada ou segredo de servidor no repositório público.
-if grep -RInE --exclude-dir=.git --exclude-dir=dist \
-  --include='*.js' --include='*.json' --include='*.html' --include='*.yaml' --include='*.yml' \
-  '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_(live|test)_[A-Za-z0-9_.-]{16,}|SUPABASE_SERVICE_ROLE_KEY.{0,12}[:=].{0,6}[A-Za-z0-9_.-]{16,}|MERCADO_PAGO_ACCESS_TOKEN.{0,40}[:=].{0,6}[A-Za-z0-9_.-]{16,})' .; then
+secret_matches="$(
+  grep -RInE --exclude-dir=.git --exclude-dir=dist \
+    --include='*.js' --include='*.json' --include='*.html' --include='*.yaml' --include='*.yml' \
+    '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_(live|test)_[A-Za-z0-9_.-]{16,}|SUPABASE_SERVICE_ROLE_KEY.{0,12}[:=].{0,6}[A-Za-z0-9_.-]{16,}|MERCADO_PAGO_ACCESS_TOKEN.{0,40}[:=].{0,6}[A-Za-z0-9_.-]{16,})' . || true
+)"
+if [[ -n "$secret_matches" ]]; then
+  printf '%s\n' "$secret_matches" >&2
   fail_build 'possível segredo privado encontrado em arquivo público.'
 fi
 
@@ -32,5 +51,11 @@ cp -R assets politicas produto admin dist/
 cp index.html catalogo.html carrinho.html checkout.html cartao.html pagamento.html comparar.html contato.html quiz.html sobre.html 404.html dist/
 cp manifest.webmanifest robots.txt sitemap.xml dist/
 cp .well-known/security.txt dist/.well-known/security.txt
+
+# Confere os arquivos essenciais antes de entregar o diretório ao Render.
+test -f dist/index.html || fail_build 'página inicial ausente no dist.'
+test -f dist/admin/index.html || fail_build 'painel administrativo ausente no dist.'
+test -f dist/checkout.html || fail_build 'checkout ausente no dist.'
+test -f dist/.well-known/security.txt || fail_build 'security.txt ausente no dist.'
 
 printf 'Build seguro da Zoryvena criado em dist/.\n'
