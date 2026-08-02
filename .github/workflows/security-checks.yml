@@ -1,0 +1,81 @@
+name: Security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-security:
+    name: Static security validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Reject private credentials in tracked files
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden='SUPABASE_SERVICE_ROLE_KEY|MERCADO_PAGO_ACCESS_TOKEN|MERCADO_PAGO_WEBHOOK_SECRET|sk_(live|test|proj)_[A-Za-z0-9_-]{12,}|APP_USR-[A-Za-z0-9_-]{20,}'
+          if git grep -nE "$forbidden" -- ':!*.md' ':!SECURITY.md'; then
+            echo 'Private credential or forbidden secret reference found in tracked source.' >&2
+            exit 1
+          fi
+
+      - name: Parse every JavaScript module
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --input-type=module --check < "$file"
+          done < <(find assets admin -type f -name '*.js' -print0)
+
+      - name: Reject inline JavaScript handlers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --include='*.html' --include='*.js' '\bon(click|error|load|submit|focus|mouseover|mouseenter|mouseleave|keydown|keyup)\s*=' . \
+             --exclude-dir=.git --exclude-dir=dist; then
+            echo 'Inline event handler found. Use addEventListener instead.' >&2
+            exit 1
+          fi
+
+      - name: Verify critical security configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Content-Security-Policy" render.yaml
+          grep -q "script-src-attr 'none'" render.yaml
+          grep -q "Strict-Transport-Security" render.yaml
+          grep -q "frame-ancestors 'none'" render.yaml
+          grep -q "Permissions-Policy" render.yaml
+          grep -q "no-store, max-age=0" render.yaml
+          grep -q "mfa-bootstrap.js" admin/admin-fixes.js
+          grep -q "sessionStorage" assets/js/supabase.js
+          grep -q "get_storefront_products" assets/js/store.js
+
+      - name: Build deployable static site
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash render-build.sh
+          test -f dist/index.html
+          test -f dist/admin/index.html
+          test -f dist/admin/mfa-bootstrap.js
+          test -f dist/checkout.html
+          test -f dist/cartao.html
+          test -f dist/pagamento.html
