@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#050505">
-  <title>Resultado do pagamento | Zoryvena Perfumes</title>
+  <title>Pagamento | Zoryvena Perfumes</title>
   <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
   <link rel="icon" href="/assets/icons/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/premium.css">
+  <link rel="stylesheet" href="/assets/css/professional-polish.css?v=20260801-1">
+  <link rel="stylesheet" href="/assets/css/pix-payment.css?v=20260801-1">
 </head>
 <body>
   <div class="announcement-bar">Pagamento seguro com Mercado Pago</div>
@@ -20,28 +22,62 @@
   </header>
 
   <main>
-    <section class="section" style="min-height:65vh;display:grid;place-items:center">
-      <article class="summary-card" style="width:min(680px,100%);text-align:center;padding:clamp(28px,6vw,64px)">
-        <span class="eyebrow" id="paymentEyebrow">Resultado do pagamento</span>
-        <h1 id="paymentTitle">Verificando retorno...</h1>
-        <p id="paymentMessage">Aguarde enquanto organizamos as informações do pedido.</p>
-        <p id="paymentOrder"></p>
-        <div class="detail-actions" style="justify-content:center;margin-top:28px">
+    <section class="payment-section">
+      <article class="summary-card payment-card">
+        <span class="eyebrow" id="paymentEyebrow">Pagamento</span>
+        <h1 id="paymentTitle">Verificando informações…</h1>
+        <p id="paymentMessage">Aguarde enquanto organizamos os dados do pedido.</p>
+        <p id="paymentOrder" class="payment-order"></p>
+
+        <section id="pixPayment" class="pix-payment" hidden aria-labelledby="pixHeading">
+          <div class="pix-topline">
+            <div>
+              <span class="pix-label">Valor do Pix</span>
+              <strong id="pixAmount" class="pix-amount"></strong>
+            </div>
+            <div class="pix-countdown-wrap">
+              <span class="pix-label">Tempo restante</span>
+              <strong id="pixCountdown" class="pix-countdown">30:00</strong>
+            </div>
+          </div>
+
+          <div id="pixQrVisual" class="pix-qr" aria-label="QR Code para pagamento Pix"></div>
+
+          <div class="pix-instructions">
+            <strong id="pixHeading">Escaneie com o aplicativo do seu banco</strong>
+            <p>Ou copie o código abaixo e escolha a opção Pix Copia e Cola.</p>
+          </div>
+
+          <label class="pix-code-field" for="pixCode">
+            <span>Pix Copia e Cola</span>
+            <textarea id="pixCode" readonly rows="4"></textarea>
+          </label>
+
+          <div class="pix-actions">
+            <button class="button button-gold" id="copyPix" type="button">Copiar código Pix</button>
+            <a class="button button-outline" id="openPixTicket" href="#" target="_blank" rel="noopener noreferrer" hidden>Abrir instruções do Mercado Pago</a>
+          </div>
+          <p id="pixCopyFeedback" class="pix-feedback" aria-live="polite"></p>
+        </section>
+
+        <div class="detail-actions payment-default-actions" id="paymentActions">
           <a class="button button-gold" id="paymentPrimary" href="/catalogo.html">Voltar ao catálogo</a>
           <a class="button button-outline" id="paymentWhatsapp" href="/contato.html">Falar com a Zoryvena</a>
         </div>
-        <p style="margin-top:24px;font-size:12px">Ambiente de teste: nenhuma cobrança real é realizada.</p>
+
+        <p class="test-environment-note">Ambiente de teste: nenhuma cobrança real é realizada.</p>
       </article>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-brand"><img class="footer-logo" src="/assets/branding/logo-square-clean.png" alt="Logo Zoryvena Perfumes"><div><strong>ZORYVENA PERFUMES</strong><p>Sua presença começa pela fragrância.</p></div></div>
-    <div><h3>Atendimento</h3><p data-store-whatsapp>WhatsApp a configurar</p><p data-store-email>zoryvenaperfumes@gmail.com</p></div>
+    <div><h3>Atendimento</h3><p data-store-whatsapp>WhatsApp</p><p data-store-email>zoryvenaperfumes@gmail.com</p></div>
     <div class="footer-bottom"><span>© <span data-current-year></span> Zoryvena Perfumes.</span></div>
   </footer>
 
   <div class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script type="module" src="/assets/js/common.js"></script>
   <script type="module" src="/assets/js/payment-return.js"></script>
 </body>
