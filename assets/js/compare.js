@@ -1,5 +1,33 @@
-import { getCompare, getProduct, clearCompare } from './store.js';
-import { media, emptyState, escapeHtml } from './components.js';
-const container=document.querySelector('#compareContent');
-function render(){const products=getCompare().map(getProduct).filter(Boolean);if(products.length<2){container.innerHTML=emptyState('Escolha pelo menos 2 perfumes','No catálogo, marque a opção “Comparar” em até três fragrâncias.','/catalogo.html','Ir ao catálogo');return;}const rows=[['Gênero','gender'],['Família olfativa','family'],['Ocasião','occasion'],['Clima','climate'],['Fixação','fixation'],['Projeção','projection'],['Saída','topNotes'],['Coração','heartNotes'],['Fundo','baseNotes']];container.innerHTML=`<div class="compare-table"><div class="compare-row compare-products"><div></div>${products.map(p=>`<div>${media(p,'compare')}<h2>${escapeHtml(p.name)}</h2><span>${escapeHtml(p.brand)}</span><a class="button button-dark" href="/produto/${p.id}/">Ver detalhes</a></div>`).join('')}</div>${rows.map(([label,key])=>`<div class="compare-row"><strong>${label}</strong>${products.map(p=>`<div>${escapeHtml(p[key])}</div>`).join('')}</div>`).join('')}</div><button id="clearComparison" class="button button-outline">Limpar comparação</button>`;document.querySelector('#clearComparison').addEventListener('click',()=>{clearCompare();render();});}
+import { getCompare, getProduct, clearCompare, productUrl } from './store.js';
+import { media, emptyState, escapeHtml, safeInternalHref } from './components.js';
+
+const container = document.querySelector('#compareContent');
+
+function render() {
+  const products = getCompare().map(getProduct).filter(Boolean);
+  if (products.length < 2) {
+    container.innerHTML = emptyState('Escolha pelo menos 2 perfumes', 'No catálogo, marque a opção “Comparar” em até três fragrâncias.', '/catalogo.html', 'Ir ao catálogo');
+    return;
+  }
+
+  const rows = [
+    ['Gênero', 'gender'], ['Família olfativa', 'family'], ['Ocasião', 'occasion'],
+    ['Clima', 'climate'], ['Fixação', 'fixation'], ['Projeção', 'projection'],
+    ['Saída', 'topNotes'], ['Coração', 'heartNotes'], ['Fundo', 'baseNotes'],
+  ];
+
+  container.innerHTML = `<div class="compare-table">
+    <div class="compare-row compare-products"><div></div>${products.map(product => {
+      const href = escapeHtml(safeInternalHref(productUrl(product), '/catalogo.html'));
+      return `<div>${media(product, 'compare')}<h2>${escapeHtml(product.name)}</h2><span>${escapeHtml(product.brand)}</span><a class="button button-dark" href="${href}">Ver detalhes</a></div>`;
+    }).join('')}</div>
+    ${rows.map(([label, key]) => `<div class="compare-row"><strong>${escapeHtml(label)}</strong>${products.map(product => `<div>${escapeHtml(product[key])}</div>`).join('')}</div>`).join('')}
+  </div><button id="clearComparison" class="button button-outline">Limpar comparação</button>`;
+
+  document.querySelector('#clearComparison').addEventListener('click', () => {
+    clearCompare();
+    render();
+  });
+}
+
 render();
