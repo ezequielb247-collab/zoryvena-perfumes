@@ -1,0 +1,5 @@
+Contact: mailto:zoryvenaperfumes@gmail.com
+Preferred-Languages: pt-BR, en
+Canonical: https://zoryvena-perfumes.onrender.com/.well-known/security.txt
+Policy: https://zoryvena-perfumes.onrender.com/politicas/privacidade.html
+Expires: 2027-08-02T23:59:59Z
