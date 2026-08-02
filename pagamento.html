@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/premium.css">
   <link rel="stylesheet" href="/assets/css/professional-polish.css?v=20260801-1">
-  <link rel="stylesheet" href="/assets/css/pix-payment.css?v=20260801-1">
+  <link rel="stylesheet" href="/assets/css/pix-payment.css?v=20260802-2">
 </head>
 <body>
   <div class="announcement-bar">Pagamento seguro com Mercado Pago</div>
@@ -23,7 +23,7 @@
 
   <main>
     <section class="payment-section">
-      <article class="summary-card payment-card">
+      <article class="summary-card payment-card" id="paymentCard">
         <span class="eyebrow" id="paymentEyebrow">Pagamento</span>
         <h1 id="paymentTitle">Verificando informações…</h1>
         <p id="paymentMessage">Aguarde enquanto organizamos os dados do pedido.</p>
@@ -57,7 +57,22 @@
             <button class="button button-gold" id="copyPix" type="button">Copiar código Pix</button>
             <a class="button button-outline" id="openPixTicket" href="#" target="_blank" rel="noopener noreferrer" hidden>Abrir instruções do Mercado Pago</a>
           </div>
-          <p id="pixCopyFeedback" class="pix-feedback" aria-live="polite"></p>
+          <p id="pixCopyFeedback" class="pix-feedback" aria-live="polite">Aguardando a confirmação automática do pagamento…</p>
+        </section>
+
+        <section id="paymentConfirmed" class="payment-confirmed" hidden aria-live="polite">
+          <div class="payment-confirmed-icon" aria-hidden="true">✓</div>
+          <span class="payment-confirmed-label">Pagamento confirmado</span>
+          <h2>Pix recebido com sucesso</h2>
+          <p>O Mercado Pago confirmou o pagamento e o pedido já foi atualizado automaticamente.</p>
+          <div class="payment-confirmed-details">
+            <span>Pedido</span>
+            <strong id="confirmedOrderCode"></strong>
+          </div>
+          <div class="payment-confirmed-details">
+            <span>Status</span>
+            <strong>Pagamento aprovado</strong>
+          </div>
         </section>
 
         <div class="detail-actions payment-default-actions" id="paymentActions">
@@ -65,7 +80,7 @@
           <a class="button button-outline" id="paymentWhatsapp" href="/contato.html">Falar com a Zoryvena</a>
         </div>
 
-        <p class="test-environment-note">Ambiente de teste: nenhuma cobrança real é realizada.</p>
+        <p class="test-environment-note" id="environmentNote">Ambiente de teste: nenhuma cobrança real é realizada.</p>
       </article>
     </section>
   </main>
@@ -79,6 +94,6 @@
   <div class="toast" role="status" aria-live="polite" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script type="module" src="/assets/js/common.js"></script>
-  <script type="module" src="/assets/js/payment-return.js"></script>
+  <script type="module" src="/assets/js/payment-return.js?v=20260802-2"></script>
 </body>
 </html>
