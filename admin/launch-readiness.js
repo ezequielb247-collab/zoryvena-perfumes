@@ -32,12 +32,24 @@ function render(items) {
       ? 'Lançamento controlado possível'
       : 'Pronto para abrir';
 
-  list.innerHTML = items.map(entry => `
-    <article class="readiness-item ${entry.ok ? 'is-ready' : entry.critical ? 'is-blocker' : 'is-warning'}">
-      <span class="readiness-icon" aria-hidden="true">${entry.ok ? '✓' : entry.critical ? '!' : '•'}</span>
-      <div><strong>${entry.label}</strong><p>${entry.detail}</p></div>
-    </article>
-  `).join('');
+  const fragment = document.createDocumentFragment();
+  items.forEach(entry => {
+    const card = document.createElement('article');
+    card.className = `readiness-item ${entry.ok ? 'is-ready' : entry.critical ? 'is-blocker' : 'is-warning'}`;
+    const icon = document.createElement('span');
+    icon.className = 'readiness-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = entry.ok ? '✓' : entry.critical ? '!' : '•';
+    const content = document.createElement('div');
+    const title = document.createElement('strong');
+    title.textContent = entry.label;
+    const detail = document.createElement('p');
+    detail.textContent = entry.detail;
+    content.append(title, detail);
+    card.append(icon, content);
+    fragment.appendChild(card);
+  });
+  list.replaceChildren(fragment);
 
   summary.className = `readiness-summary ${blockers.length ? 'has-blockers' : 'is-ready'}`;
   summary.textContent = blockers.length
@@ -52,23 +64,27 @@ async function refreshReadiness() {
   if (!card || $('#adminPanel')?.hidden) return;
 
   try {
-    const [productsResult, settingsResult, ordersResult] = await Promise.all([
+    const [productsResult, settingsResult, ordersResult, factorsResult] = await Promise.all([
       supabase.from('products').select('id,name,active,cost,price,pix_price,stock,image'),
       supabase.from('store_settings').select('*').eq('id', 1).single(),
       supabase.from('orders').select('id,status,total,fulfillment_status,archived_at'),
+      supabase.auth.mfa.listFactors(),
     ]);
     if (productsResult.error) throw productsResult.error;
     if (settingsResult.error) throw settingsResult.error;
     if (ordersResult.error) throw ordersResult.error;
+    if (factorsResult.error) throw factorsResult.error;
 
     const products = productsResult.data || [];
     const settings = settingsResult.data;
     const activeOrders = (ordersResult.data || []).filter(order => !order.archived_at);
     const approvedOrders = activeOrders.filter(order => order.status === 'Pagamento aprovado');
     const pendingOperations = activeOrders.filter(order => ['Novo pedido', 'Em separação'].includes(order.fulfillment_status));
+    const allFactors = Array.isArray(factorsResult.data?.all) ? factorsResult.data.all : [];
+    const mfaReady = allFactors.some(factor => factor.status === 'verified' && factor.factor_type === 'totp');
 
-    if ($('#metricOrders')) $('#metricOrders').textContent = approvedOrders.length;
-    if ($('#metricPending')) $('#metricPending').textContent = pendingOperations.length;
+    if ($('#metricOrders')) $('#metricOrders').textContent = String(approvedOrders.length);
+    if ($('#metricPending')) $('#metricPending').textContent = String(pendingOperations.length);
     if ($('#metricRevenue')) $('#metricRevenue').textContent = money.format(approvedOrders.reduce((sum, order) => sum + Number(order.total || 0), 0));
 
     const active = products.filter(product => product.active);
@@ -83,12 +99,13 @@ async function refreshReadiness() {
     const shippingLabel = settings.shipping_mode === 'automatic'
       ? 'Frete automático integrado.'
       : settings.shipping_mode === 'pickup_only'
-        ? 'Operação limitada à retirada em Macaé.'
+        ? 'Operação limitada à retirada combinada em Macaé.'
         : 'Entrega somente após cotação manual, antes do pagamento.';
 
     render([
+      item('Autenticação em duas etapas', mfaReady, mfaReady ? 'Aplicativo autenticador verificado para a conta administrativa.' : 'Ative o aplicativo autenticador em Configurações.', true),
       item('Identificação do vendedor', legalReady, legalReady ? 'Nome legal e CPF/CNPJ preenchidos.' : 'Preencha nome legal e CPF/CNPJ em Configurações.', true),
-      item('Endereço e canais oficiais', contactReady, contactReady ? 'Endereço, e-mail e WhatsApp disponíveis.' : 'Falta endereço comercial ou canal oficial.', true),
+      item('Endereço legal e canais online', contactReady, contactReady ? 'Endereço de correspondência, e-mail e WhatsApp disponíveis.' : 'Falta endereço legal para correspondência ou canal oficial.', true),
       item('Políticas revisadas', policiesReady, policiesReady ? `Revisadas em ${new Date(`${settings.policies_updated_at}T12:00:00`).toLocaleDateString('pt-BR')}.` : 'Defina a data da última revisão das políticas.', true),
       item('Procedência do fornecedor', Boolean(settings.supplier_docs_verified), settings.supplier_docs_verified ? 'Notas, lotes e procedência marcados como conferidos.' : 'Confirme e arquive documentos do fornecedor.', true),
       item('Produto disponível para venda', sellable.length > 0, `${sellable.length} de ${active.length} produto(s) ativo(s) têm preço e estoque.`, true),
