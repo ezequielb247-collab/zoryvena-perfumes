@@ -1,3 +1,4 @@
+import './security.js';
 import { supabase } from '../assets/js/supabase.js';
 import { showToast } from '../assets/js/store.js';
 
@@ -25,9 +26,7 @@ function applyVirtualStoreLabels() {
   document.querySelectorAll('.readiness-item').forEach(card => {
     const title = card.querySelector('strong');
     const detail = card.querySelector('p');
-    if (title?.textContent === 'Endereço e canais oficiais') {
-      title.textContent = 'Endereço legal e canais online';
-    }
+    if (title?.textContent === 'Endereço e canais oficiais') title.textContent = 'Endereço legal e canais online';
     if (detail?.textContent === 'Endereço, e-mail e WhatsApp disponíveis.') {
       detail.textContent = 'Endereço de identificação legal, e-mail e WhatsApp disponíveis. A loja não possui atendimento presencial.';
     }
