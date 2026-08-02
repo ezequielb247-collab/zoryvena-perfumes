@@ -122,28 +122,31 @@ export function whatsappUrl(message) {
 }
 export function productWhatsapp(product) { return whatsappUrl(`Olá! Gostaria de consultar o perfume ${product.brand} ${product.name} (${product.volume}).`); }
 
+async function functionErrorMessage(error, fallback) {
+  let details = error?.message || fallback;
+  try {
+    const response = error?.context;
+    if (response && typeof response.json === 'function') {
+      const body = await response.json();
+      details = body?.error || details;
+    }
+  } catch { /* mantém a mensagem original */ }
+  return details || fallback;
+}
+
 export async function createOrder(data) {
   const items = cartDetails().map(item => ({ id: item.id, quantity: item.quantity }));
   const paymentMethod = data.payment === 'pix' ? 'pix' : 'card';
   const { data: result, error } = await supabase.functions.invoke('create-order', {
     body: { customer: data, items, notes: data.notes || null, paymentMethod },
   });
-  if (error) {
-    let details = error.message;
-    try {
-      const response = error.context;
-      if (response && typeof response.json === 'function') {
-        const body = await response.json();
-        details = body?.error || details;
-      }
-    } catch { /* mantém a mensagem original */ }
-    throw new Error(details || 'Não foi possível iniciar o pagamento.');
-  }
+  if (error) throw new Error(await functionErrorMessage(error, 'Não foi possível iniciar o pagamento.'));
   if (result?.error) throw new Error(result.error);
 
   const order = {
     id: result.orderCode,
     databaseId: result.id,
+    statusToken: result.statusToken || '',
     total: Number(result.total || 0),
     paymentMethod,
     paymentMode: result.paymentMode || paymentMethod,
@@ -158,6 +161,20 @@ export async function createOrder(data) {
   };
   sessionStorage.setItem('zoryvena.last-order', JSON.stringify(order));
   return order;
+}
+
+export async function getOrderStatus(order) {
+  if (!order?.databaseId) throw new Error('Pedido inválido para acompanhamento.');
+  const { data, error } = await supabase.functions.invoke('order-status', {
+    body: {
+      orderId: order.databaseId,
+      statusToken: order.statusToken || '',
+      email: order.email || '',
+    },
+  });
+  if (error) throw new Error(await functionErrorMessage(error, 'Não foi possível consultar o pedido.'));
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 export function getOrders() { return load(KEYS.orders, []); }
