@@ -44,26 +44,46 @@ function formatPhone(value) {
 
 function showCepMessage(message, state = '') {
   if (!cepStatus) return;
-  cepStatus.textContent = message;
+  cepStatus.textContent = String(message || '').slice(0, 300);
   state ? cepStatus.dataset.state = state : delete cepStatus.dataset.state;
 }
 
 function fill(name, value) {
   const field = form?.elements?.[name];
-  if (field) field.value = value || '';
+  if (field) field.value = String(value || '').slice(0, 180);
+}
+
+function policyLink(href, label) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = label;
+  return link;
 }
 
 function ensurePolicyAcceptance() {
   if (!form || form.querySelector('[data-policy-acceptance]')) return;
   const submit = form.querySelector('button[type="submit"]');
   if (!submit) return;
+
   const wrapper = document.createElement('label');
   wrapper.className = 'checkout-policy-acceptance';
   wrapper.dataset.policyAcceptance = '';
-  wrapper.innerHTML = `
-    <input required type="checkbox" name="acceptedPolicies" value="yes">
-    <span>Li e aceito os <a href="/politicas/termos-de-compra.html" target="_blank" rel="noopener noreferrer">Termos de compra</a>, a <a href="/politicas/trocas-e-devolucoes.html" target="_blank" rel="noopener noreferrer">Política de trocas</a> e a <a href="/politicas/privacidade.html" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>
-  `;
+  const checkbox = document.createElement('input');
+  checkbox.required = true;
+  checkbox.type = 'checkbox';
+  checkbox.name = 'acceptedPolicies';
+  checkbox.value = 'yes';
+  const text = document.createElement('span');
+  text.append('Li e aceito os ');
+  text.append(policyLink('/politicas/termos-de-compra.html', 'Termos de compra'));
+  text.append(', a ');
+  text.append(policyLink('/politicas/trocas-e-devolucoes.html', 'Política de trocas'));
+  text.append(' e a ');
+  text.append(policyLink('/politicas/privacidade.html', 'Política de privacidade'));
+  text.append('.');
+  wrapper.append(checkbox, text);
   submit.before(wrapper);
 }
 
@@ -101,14 +121,22 @@ function renderSummary() {
   const environmentNote = document.querySelector('#environmentNote');
   if (!list || !total || !delivery || !note) return;
 
-  list.innerHTML = items.map(item => {
+  const fragment = document.createDocumentFragment();
+  items.forEach(item => {
     const price = productPriceForPayment(item.product, method);
-    return `<li><span>${item.quantity}× ${item.product.brand} ${item.product.name}</span><strong>${money.format(price * item.quantity)}</strong></li>`;
-  }).join('');
+    const row = document.createElement('li');
+    const description = document.createElement('span');
+    description.textContent = `${item.quantity}× ${String(item.product.brand || '').slice(0, 100)} ${String(item.product.name || '').slice(0, 120)}`;
+    const value = document.createElement('strong');
+    value.textContent = money.format(price * item.quantity);
+    row.append(description, value);
+    fragment.appendChild(row);
+  });
+  list.replaceChildren(fragment);
   total.textContent = money.format(cartTotal(method));
   delivery.textContent = pickup ? 'Grátis' : 'Cotação antes do pagamento';
   note.textContent = pickup
-    ? 'Retirada gratuita em Macaé. O local e o horário serão confirmados no atendimento.'
+    ? 'Retirada combinada em Macaé. O local e o horário serão confirmados no atendimento.'
     : 'Para evitar cobrança incompleta, o frete será cotado no WhatsApp antes da geração do pagamento.';
 
   const config = getConfig();
@@ -133,6 +161,8 @@ async function searchCep(value) {
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
       signal: cepRequest.signal,
+      referrerPolicy: 'no-referrer',
+      headers: { Accept: 'application/json' },
     });
     if (!response.ok) throw new Error('Não foi possível consultar o CEP agora.');
     const address = await response.json();
@@ -162,6 +192,15 @@ function bindForm() {
   const emailHelp = document.querySelector('#emailHelp');
   if (emailHelp) emailHelp.textContent = 'Obrigatório para identificar o pedido e permitir o contato sobre pagamento, retirada ou entrega.';
 
+  const limits = {
+    name: 120, whatsapp: 20, email: 150, street: 160, number: 20,
+    complement: 120, neighborhood: 100, city: 100, state: 2, notes: 1000,
+  };
+  Object.entries(limits).forEach(([name, maxLength]) => {
+    const field = form?.elements?.[name];
+    if (field) field.maxLength = maxLength;
+  });
+
   cep?.addEventListener('input', event => {
     event.target.value = formatCep(event.target.value);
     const currentCep = digits(event.target.value);
@@ -178,7 +217,7 @@ function bindForm() {
     if (digits(event.target.value).length === 8) searchCep(event.target.value);
   });
 
-  phone?.addEventListener('input', event => event.target.value = formatPhone(event.target.value));
+  phone?.addEventListener('input', event => { event.target.value = formatPhone(event.target.value); });
   state?.addEventListener('input', event => {
     event.target.value = String(event.target.value || '').replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase();
   });
@@ -195,22 +234,22 @@ function shippingQuoteMessage(data) {
   const method = paymentMethod();
   const lines = items.map(item => {
     const unit = productPriceForPayment(item.product, method);
-    return `• ${item.quantity}x ${item.product.brand} ${item.product.name} — ${money.format(unit * item.quantity)}`;
+    return `• ${item.quantity}x ${String(item.product.brand || '').slice(0, 100)} ${String(item.product.name || '').slice(0, 120)} — ${money.format(unit * item.quantity)}`;
   });
   const address = [
-    `${data.street}, ${data.number}`,
-    data.complement,
-    data.neighborhood,
-    `${data.city}/${data.state}`,
+    `${String(data.street || '').slice(0, 160)}, ${String(data.number || '').slice(0, 20)}`,
+    String(data.complement || '').slice(0, 120),
+    String(data.neighborhood || '').slice(0, 100),
+    `${String(data.city || '').slice(0, 100)}/${String(data.state || '').slice(0, 2)}`,
     `CEP ${formatCep(data.cep)}`,
   ].filter(Boolean).join(' — ');
 
   return [
     'Olá! Gostaria de cotar o frete de um pedido da Zoryvena Perfumes.',
     '',
-    `Nome: ${data.name}`,
-    `WhatsApp: ${data.whatsapp}`,
-    `E-mail: ${data.email}`,
+    `Nome: ${String(data.name || '').slice(0, 120)}`,
+    `WhatsApp: ${String(data.whatsapp || '').slice(0, 20)}`,
+    `E-mail: ${String(data.email || '').slice(0, 150)}`,
     `Endereço: ${address}`,
     '',
     'Itens:',
@@ -250,7 +289,7 @@ form?.addEventListener('submit', async event => {
     const data = Object.fromEntries(new FormData(form));
     data.delivery = deliveryMethod();
     data.payment = paymentMethod();
-    data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada em Macaé — grátis' : 'Entrega com cotação antes do pagamento';
+    data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada combinada em Macaé' : 'Entrega com cotação antes do pagamento';
     data.whatsapp = digits(data.whatsapp);
     data.email = String(data.email || '').trim().toLowerCase();
 
@@ -262,23 +301,20 @@ form?.addEventListener('submit', async event => {
       return;
     }
 
-    data.address = 'Retirada em Macaé';
+    data.address = 'Retirada combinada em Macaé';
     const order = await createOrder(data);
 
     if (order.paymentMode === 'pix' && (order.pix?.qrCode || order.pix?.ticketUrl)) {
       location.href = '/pagamento.html?resultado=pix';
       return;
     }
-
     if (order.paymentMode === 'card_brick') {
       location.href = '/cartao.html';
       return;
     }
-
     if (!order.paymentUrl) throw new Error('O endereço de pagamento não foi gerado.');
     location.href = order.paymentUrl;
   } catch (error) {
-    console.error(error);
     showToast(error?.message || 'Não foi possível iniciar o pagamento. Confira os dados e tente novamente.');
     if (button) {
       button.disabled = false;
