@@ -4,6 +4,7 @@ import { supabase, mapProductRow, mapSettingsRow } from './supabase.js';
 
 const REMOTE_PRODUCTS_KEY = 'zoryvena.remote-products.v1';
 const REMOTE_CONFIG_KEY = 'zoryvena.remote-config.v1';
+const ALLOWED_IMAGE_HOSTS = new Set([location.host, 'ajyultndtauabfufrmfr.supabase.co']);
 
 export const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -26,8 +27,8 @@ export function getProducts() {
 export async function syncStoreData() {
   try {
     const [{ data: products, error: productError }, { data: settings, error: settingsError }] = await Promise.all([
-      supabase.from('products').select('*').eq('active', true).order('rank', { ascending: true }),
-      supabase.from('store_settings').select('*').eq('id', 1).maybeSingle(),
+      supabase.from('storefront_products').select('*').order('rank', { ascending: true }),
+      supabase.from('storefront_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     if (productError) throw productError;
     if (settingsError) throw settingsError;
@@ -45,7 +46,7 @@ export async function syncStoreData() {
     window.dispatchEvent(new CustomEvent('zoryvena:data', { detail: { changed } }));
     return changed;
   } catch (error) {
-    console.warn('Não foi possível sincronizar os dados da loja.', error);
+    console.warn('Não foi possível sincronizar os dados públicos da loja.');
     return false;
   }
 }
@@ -66,11 +67,25 @@ export function availabilityText(product) {
   if (Number(product?.stock) > 0) return `${product.stock} em estoque`;
   return isPriced(product) ? 'Estoque sob consulta' : 'Consulte disponibilidade';
 }
-export function productUrl(product) { return `/produto/${product.id}/`; }
+export function productUrl(product) {
+  const id = String(product?.id || '');
+  return /^[a-z0-9-]{1,120}$/i.test(id) ? `/produto/${id}/` : '/catalogo.html';
+}
 export function productImage(product) {
-  if (!product?.image) return '';
-  if (/^https?:\/\//i.test(product.image)) return product.image;
-  return `/${product.image.replace(/^\//, '')}`;
+  const raw = String(product?.image || '').trim();
+  if (!raw) return '';
+  if (!/^https?:\/\//i.test(raw)) {
+    const clean = raw.replace(/^\/+/, '');
+    return clean && !clean.includes('..') ? `/${clean}` : '';
+  }
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' || !ALLOWED_IMAGE_HOSTS.has(url.host)) return '';
+    if (url.host === 'ajyultndtauabfufrmfr.supabase.co' && !url.pathname.startsWith('/storage/v1/object/public/product-images/')) return '';
+    return url.href;
+  } catch {
+    return '';
+  }
 }
 
 export function getCart() { return load(KEYS.cart, []); }
@@ -81,10 +96,13 @@ export function addToCart(product, quantity = 1) {
   const item = cart.find(entry => entry.id === product.id);
   if (item) item.quantity = Math.min(Number(product.stock), item.quantity + quantity);
   else cart.push({ id: product.id, quantity });
-  saveCart(cart); return true;
+  saveCart(cart);
+  return true;
 }
 export function updateCart(id, quantity) {
-  const product = getProduct(id); const cart = getCart(); const item = cart.find(entry => entry.id === id);
+  const product = getProduct(id);
+  const cart = getCart();
+  const item = cart.find(entry => entry.id === id);
   if (!item || !product) return;
   item.quantity = Math.max(1, Math.min(Number(product.stock || 1), Number(quantity || 1)));
   saveCart(cart);
@@ -102,25 +120,38 @@ export function cartTotal(paymentMethod = 'card') {
 
 export function getFavorites() { return load(KEYS.favorites, []); }
 export function toggleFavorite(id) {
-  const favorites = getFavorites(); const next = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
-  save(KEYS.favorites, next); window.dispatchEvent(new Event('zoryvena:state')); return next.includes(id);
+  const favorites = getFavorites();
+  const next = favorites.includes(id) ? favorites.filter(value => value !== id) : [...favorites, id];
+  save(KEYS.favorites, next);
+  window.dispatchEvent(new Event('zoryvena:state'));
+  return next.includes(id);
 }
 export function getCompare() { return load(KEYS.compare, []); }
 export function toggleCompare(id) {
   const selected = getCompare();
-  if (selected.includes(id)) { const next = selected.filter(x => x !== id); save(KEYS.compare, next); window.dispatchEvent(new Event('zoryvena:state')); return { ok: true, selected: next }; }
+  if (selected.includes(id)) {
+    const next = selected.filter(value => value !== id);
+    save(KEYS.compare, next);
+    window.dispatchEvent(new Event('zoryvena:state'));
+    return { ok: true, selected: next };
+  }
   if (selected.length >= 3) return { ok: false, selected };
-  const next = [...selected, id]; save(KEYS.compare, next); window.dispatchEvent(new Event('zoryvena:state')); return { ok: true, selected: next };
+  const next = [...selected, id];
+  save(KEYS.compare, next);
+  window.dispatchEvent(new Event('zoryvena:state'));
+  return { ok: true, selected: next };
 }
 export function clearCompare() { save(KEYS.compare, []); window.dispatchEvent(new Event('zoryvena:state')); }
 
 export function whatsappUrl(message) {
   const config = getConfig();
-  const number = String(config.whatsapp || '').replace(/\D/g, '');
-  const base = number && !String(config.whatsapp).includes('PREENCHER') ? `https://wa.me/${number}` : 'https://wa.me/';
-  return `${base}?text=${encodeURIComponent(message)}`;
+  const number = String(config.whatsapp || '').replace(/\D/g, '').slice(0, 15);
+  const base = number.length >= 10 ? `https://wa.me/${number}` : 'https://wa.me/';
+  return `${base}?text=${encodeURIComponent(String(message || '').slice(0, 3500))}`;
 }
-export function productWhatsapp(product) { return whatsappUrl(`Olá! Gostaria de consultar o perfume ${product.brand} ${product.name} (${product.volume}).`); }
+export function productWhatsapp(product) {
+  return whatsappUrl(`Olá! Gostaria de consultar o perfume ${product.brand} ${product.name} (${product.volume}).`);
+}
 
 async function functionErrorMessage(error, fallback) {
   let details = error?.message || fallback;
@@ -158,6 +189,7 @@ export async function createOrder(data) {
     testBuyerEmail: result.testBuyerEmail || '',
     pix: result.pix || null,
     environment: result.environment,
+    reservationExpiresAt: result.reservationExpiresAt || '',
     createdAt: Date.now(),
     ...data,
   };
@@ -166,13 +198,9 @@ export async function createOrder(data) {
 }
 
 export async function getOrderStatus(order) {
-  if (!order?.databaseId) throw new Error('Pedido inválido para acompanhamento.');
+  if (!order?.databaseId || !order?.statusToken) throw new Error('Pedido inválido para acompanhamento.');
   const { data, error } = await supabase.functions.invoke('order-status', {
-    body: {
-      orderId: order.databaseId,
-      statusToken: order.statusToken || '',
-      email: order.email || '',
-    },
+    body: { orderId: order.databaseId, statusToken: order.statusToken },
   });
   if (error) throw new Error(await functionErrorMessage(error, 'Não foi possível consultar o pedido.'));
   if (data?.error) throw new Error(data.error);
@@ -183,7 +211,10 @@ export function getOrders() { return load(KEYS.orders, []); }
 export function saveOrders(orders) { save(KEYS.orders, orders); }
 
 export function showToast(message) {
-  const toast = document.querySelector('.toast'); if (!toast) return;
-  toast.textContent = message; toast.hidden = false; clearTimeout(showToast.timer);
+  const toast = document.querySelector('.toast');
+  if (!toast) return;
+  toast.textContent = String(message || '').slice(0, 300);
+  toast.hidden = false;
+  clearTimeout(showToast.timer);
   showToast.timer = setTimeout(() => { toast.hidden = true; }, 2800);
 }
