@@ -136,9 +136,9 @@ function renderPaymentApproved(statusData = {}) {
   if (confirmedOrderCode) confirmedOrderCode.textContent = statusData.orderCode || lastOrder?.id || '';
 
   paymentCard?.classList.add('payment-card-approved');
-  eyebrow.textContent = 'Pagamento confirmado';
-  title.textContent = 'Pix pago com sucesso';
-  message.textContent = 'Recebemos a confirmação do Mercado Pago. O pedido já está aprovado e seguirá para preparação.';
+  if (eyebrow) eyebrow.hidden = true;
+  if (title) title.hidden = true;
+  message.textContent = 'Seu pagamento foi confirmado. Confira abaixo os detalhes do pedido.';
   primary.textContent = 'Continuar comprando';
   primary.href = '/catalogo.html';
 
@@ -157,6 +157,8 @@ function renderTerminalStatus(statusData) {
   finalStateRendered = true;
   stopTimers();
   if (pixPayment) pixPayment.hidden = true;
+  eyebrow.hidden = false;
+  title.hidden = false;
   eyebrow.textContent = 'Pagamento não concluído';
   title.textContent = statusData.status || 'Pagamento não aprovado';
   message.textContent = 'O pagamento não foi confirmado. Você pode voltar ao checkout e gerar uma nova cobrança.';
