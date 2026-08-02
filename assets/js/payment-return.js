@@ -69,6 +69,7 @@ function startCountdown(orderData) {
   const seconds = Number(orderData?.pix?.expiresInSeconds || 1800);
   const createdAt = Number(orderData?.createdAt || Date.now());
   const expiresAt = createdAt + seconds * 1000;
+  let timer;
 
   const update = () => {
     const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
@@ -83,12 +84,12 @@ function startCountdown(orderData) {
       }
       if (copyPix) copyPix.disabled = true;
       if (pixCopyFeedback) pixCopyFeedback.textContent = 'Este código expirou. Volte ao checkout para gerar um novo Pix.';
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     }
   };
 
   update();
-  const timer = setInterval(update, 1000);
+  timer = setInterval(update, 1000);
 }
 
 async function copyPixCode() {
