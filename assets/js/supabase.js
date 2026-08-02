@@ -60,5 +60,18 @@ export function mapSettingsRow(row) {
     email: row.email,
     freeShippingFrom: row.free_shipping_from == null ? null : Number(row.free_shipping_from),
     siteUrl: row.site_url,
+    legalName: row.legal_name || '',
+    taxId: row.tax_id || '',
+    businessAddress: row.business_address || '',
+    serviceHours: row.service_hours || '',
+    privacyContactEmail: row.privacy_contact_email || row.email || '',
+    shippingPolicy: row.shipping_policy || '',
+    shippingOriginCep: row.shipping_origin_cep || '',
+    shippingMode: row.shipping_mode || 'manual_quote',
+    paymentEnvironment: row.payment_environment || 'test',
+    emailNotificationsEnabled: Boolean(row.email_notifications_enabled),
+    supplierDocsVerified: Boolean(row.supplier_docs_verified),
+    policiesUpdatedAt: row.policies_updated_at || '',
+    launchStatus: row.launch_status || 'preparation',
   };
 }
