@@ -71,7 +71,8 @@
 
           <label class="form-field">
             <span>E-mail</span>
-            <input name="email" type="email" autocomplete="email" placeholder="voce@email.com">
+            <input required name="email" type="email" autocomplete="email" maxlength="150" placeholder="voce@email.com" aria-describedby="emailHelp">
+            <small id="emailHelp" class="field-hint">Obrigatório para receber o resumo, a confirmação e os avisos do pedido.</small>
           </label>
 
           <div class="checkout-section-title">Como você quer receber?</div>
@@ -181,7 +182,7 @@
         </div>
 
         <button class="button button-gold" type="submit">Ir para pagamento seguro</button>
-        <p class="checkout-security-line">Seus dados são usados somente para preparar o pedido e o pagamento.</p>
+        <p class="checkout-security-line">Seus dados são usados para preparar o pedido, processar o pagamento e enviar atualizações.</p>
       </form>
 
       <aside class="summary-card checkout-summary">
