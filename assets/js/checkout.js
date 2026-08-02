@@ -1,4 +1,13 @@
-import { cartDetails, cartTotal, money, createOrder, productPriceForPayment, showToast } from './store.js';
+import {
+  cartDetails,
+  cartTotal,
+  money,
+  createOrder,
+  productPriceForPayment,
+  showToast,
+  whatsappUrl,
+  getConfig,
+} from './store.js';
 
 const form = document.querySelector('#checkoutForm');
 const empty = document.querySelector('#checkoutEmpty');
@@ -44,6 +53,28 @@ function fill(name, value) {
   if (field) field.value = value || '';
 }
 
+function ensurePolicyAcceptance() {
+  if (!form || form.querySelector('[data-policy-acceptance]')) return;
+  const submit = form.querySelector('button[type="submit"]');
+  if (!submit) return;
+  const wrapper = document.createElement('label');
+  wrapper.className = 'checkout-policy-acceptance';
+  wrapper.dataset.policyAcceptance = '';
+  wrapper.innerHTML = `
+    <input required type="checkbox" name="acceptedPolicies" value="yes">
+    <span>Li e aceito os <a href="/politicas/termos-de-compra.html" target="_blank" rel="noopener noreferrer">Termos de compra</a>, a <a href="/politicas/trocas-e-devolucoes.html" target="_blank" rel="noopener noreferrer">Política de trocas</a> e a <a href="/politicas/privacidade.html" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>
+  `;
+  submit.before(wrapper);
+}
+
+function updateSubmitButton() {
+  const button = form?.querySelector('button[type="submit"]');
+  if (!button || button.disabled) return;
+  button.textContent = deliveryMethod() === 'shipping'
+    ? 'Solicitar cotação de frete no WhatsApp'
+    : 'Ir para pagamento seguro';
+}
+
 function updateAddressVisibility() {
   const shipping = deliveryMethod() === 'shipping';
   if (addressSection) addressSection.hidden = !shipping;
@@ -57,6 +88,7 @@ function updateAddressVisibility() {
     cepRequest?.abort();
     clearTimeout(cepTimer);
   }
+  updateSubmitButton();
 }
 
 function renderSummary() {
@@ -66,6 +98,7 @@ function renderSummary() {
   const total = document.querySelector('#checkoutTotal');
   const delivery = document.querySelector('#checkoutDelivery');
   const note = document.querySelector('#deliverySummaryNote');
+  const environmentNote = document.querySelector('#environmentNote');
   if (!list || !total || !delivery || !note) return;
 
   list.innerHTML = items.map(item => {
@@ -73,10 +106,17 @@ function renderSummary() {
     return `<li><span>${item.quantity}× ${item.product.brand} ${item.product.name}</span><strong>${money.format(price * item.quantity)}</strong></li>`;
   }).join('');
   total.textContent = money.format(cartTotal(method));
-  delivery.textContent = pickup ? 'Grátis' : 'Sob consulta';
+  delivery.textContent = pickup ? 'Grátis' : 'Cotação antes do pagamento';
   note.textContent = pickup
     ? 'Retirada gratuita em Macaé. O local e o horário serão confirmados no atendimento.'
-    : 'O frete será calculado e confirmado antes do envio. Ele ainda não está incluído no total parcial.';
+    : 'Para evitar cobrança incompleta, o frete será cotado no WhatsApp antes da geração do pagamento.';
+
+  const config = getConfig();
+  if (environmentNote) {
+    environmentNote.hidden = config.paymentEnvironment === 'production';
+    environmentNote.textContent = 'Ambiente de teste: nenhum valor real será cobrado nesta etapa.';
+  }
+  updateSubmitButton();
 }
 
 async function searchCep(value) {
@@ -91,7 +131,7 @@ async function searchCep(value) {
   showCepMessage('Buscando endereço…', 'loading');
 
   try {
-    const response = await fetch('https://viacep.com.br/ws/' + cep + '/json/', {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
       signal: cepRequest.signal,
     });
     if (!response.ok) throw new Error('Não foi possível consultar o CEP agora.');
@@ -119,6 +159,8 @@ function bindForm() {
   const cep = form?.elements?.cep;
   const phone = form?.elements?.whatsapp;
   const state = form?.elements?.state;
+  const emailHelp = document.querySelector('#emailHelp');
+  if (emailHelp) emailHelp.textContent = 'Obrigatório para identificar o pedido e permitir o contato sobre pagamento, retirada ou entrega.';
 
   cep?.addEventListener('input', event => {
     event.target.value = formatCep(event.target.value);
@@ -149,10 +191,41 @@ function bindForm() {
   });
 }
 
+function shippingQuoteMessage(data) {
+  const method = paymentMethod();
+  const lines = items.map(item => {
+    const unit = productPriceForPayment(item.product, method);
+    return `• ${item.quantity}x ${item.product.brand} ${item.product.name} — ${money.format(unit * item.quantity)}`;
+  });
+  const address = [
+    `${data.street}, ${data.number}`,
+    data.complement,
+    data.neighborhood,
+    `${data.city}/${data.state}`,
+    `CEP ${formatCep(data.cep)}`,
+  ].filter(Boolean).join(' — ');
+
+  return [
+    'Olá! Gostaria de cotar o frete de um pedido da Zoryvena Perfumes.',
+    '',
+    `Nome: ${data.name}`,
+    `WhatsApp: ${data.whatsapp}`,
+    `E-mail: ${data.email}`,
+    `Endereço: ${address}`,
+    '',
+    'Itens:',
+    ...lines,
+    `Total dos produtos (${method === 'pix' ? 'Pix' : 'cartão'}): ${money.format(cartTotal(method))}`,
+    '',
+    'Aguardo o valor e o prazo do frete antes de realizar o pagamento.',
+  ].join('\n');
+}
+
 if (!items.length) {
   if (content) content.hidden = true;
   if (empty) empty.hidden = false;
 } else {
+  ensurePolicyAcceptance();
   bindForm();
   updateAddressVisibility();
   renderSummary();
@@ -166,14 +239,18 @@ form?.addEventListener('submit', async event => {
   const original = button?.textContent;
   if (button) {
     button.disabled = true;
-    button.textContent = paymentMethod() === 'pix' ? 'Gerando QR Code…' : 'Preparando cartão…';
+    button.textContent = deliveryMethod() === 'shipping'
+      ? 'Abrindo cotação…'
+      : paymentMethod() === 'pix'
+        ? 'Gerando QR Code…'
+        : 'Preparando cartão…';
   }
 
   try {
     const data = Object.fromEntries(new FormData(form));
     data.delivery = deliveryMethod();
     data.payment = paymentMethod();
-    data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada em Macaé — grátis' : 'Entrega com frete sob consulta';
+    data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada em Macaé — grátis' : 'Entrega com cotação antes do pagamento';
     data.whatsapp = digits(data.whatsapp);
     data.email = String(data.email || '').trim().toLowerCase();
 
@@ -181,10 +258,11 @@ form?.addEventListener('submit', async event => {
       data.cep = digits(data.cep);
       data.state = String(data.state || '').toUpperCase();
       data.address = [data.street, data.number, data.complement, data.neighborhood].filter(Boolean).join(', ');
-    } else {
-      data.address = 'Retirada em Macaé';
+      location.href = whatsappUrl(shippingQuoteMessage(data));
+      return;
     }
 
+    data.address = 'Retirada em Macaé';
     const order = await createOrder(data);
 
     if (order.paymentMode === 'pix' && (order.pix?.qrCode || order.pix?.ticketUrl)) {
@@ -205,6 +283,7 @@ form?.addEventListener('submit', async event => {
     if (button) {
       button.disabled = false;
       button.textContent = original;
+      updateSubmitButton();
     }
   }
 });
