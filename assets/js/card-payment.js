@@ -6,6 +6,7 @@ const messageBox = document.querySelector('#cardPaymentMessage');
 const orderCode = document.querySelector('#cardOrderCode');
 const orderTotal = document.querySelector('#cardOrderTotal');
 const orderEmail = document.querySelector('#cardOrderEmail');
+const testNote = document.querySelector('.card-test-note');
 
 const order = (() => {
   try { return JSON.parse(sessionStorage.getItem('zoryvena.last-order') || 'null'); }
@@ -16,7 +17,7 @@ function showMessage(message, type = 'error') {
   if (!messageBox) return;
   messageBox.hidden = false;
   messageBox.dataset.type = type;
-  messageBox.textContent = message;
+  messageBox.textContent = String(message || '').slice(0, 300);
 }
 
 function friendlyStatusDetail(detail) {
@@ -33,13 +34,14 @@ function friendlyStatusDetail(detail) {
     cc_rejected_duplicated_payment: 'Este pagamento já foi processado.',
     cc_rejected_max_attempts: 'O limite de tentativas foi atingido. Gere um novo pedido.',
     cc_rejected_other_reason: 'O cartão foi recusado. Tente outro cartão ou revise os dados.',
+    rejected: 'O cartão foi recusado. Revise os dados ou tente outro cartão.',
     failed: 'O cartão foi recusado. Revise os dados ou tente outro cartão.',
   };
   return messages[String(detail || '')] || 'Não foi possível aprovar o cartão. Revise os dados e tente novamente.';
 }
 
 async function functionErrorMessage(error, fallback) {
-  let details = error?.message || fallback;
+  let details = fallback;
   try {
     const response = error?.context;
     if (response && typeof response.json === 'function') {
@@ -47,16 +49,20 @@ async function functionErrorMessage(error, fallback) {
       details = body?.error || details;
     }
   } catch { /* mantém mensagem padrão */ }
-  return details || fallback;
+  return String(details || fallback).slice(0, 300);
+}
+
+function reservationExpired() {
+  const expiry = new Date(order?.reservationExpiresAt || 0).getTime();
+  return !Number.isFinite(expiry) || expiry <= Date.now();
 }
 
 async function processCard(cardData) {
-  const submissionId = crypto.randomUUID();
+  if (reservationExpired()) throw new Error('A reserva deste pedido expirou. Volte ao carrinho e gere um novo pedido.');
   const { data, error } = await supabase.functions.invoke('process-card-payment', {
     body: {
       orderId: order.databaseId,
       statusToken: order.statusToken,
-      submissionId,
       cardData,
     },
   });
@@ -78,12 +84,19 @@ async function renderBrick() {
     return;
   }
 
-  orderCode.textContent = `Pedido ${order.id}`;
+  orderCode.textContent = `Pedido ${String(order.id || '').slice(0, 40)}`;
   orderTotal.textContent = money.format(Number(order.total || 0));
-  orderEmail.textContent = order.email || 'E-mail do pedido';
+  orderEmail.textContent = String(order.email || 'E-mail do pedido').slice(0, 150);
+  if (testNote) testNote.hidden = order.environment !== 'test';
+
+  if (reservationExpired()) {
+    showMessage('A reserva deste pedido expirou. Volte ao carrinho e gere um novo pedido.');
+    if (loading) loading.hidden = true;
+    return;
+  }
 
   if (!order.cardPublicKey) {
-    showMessage('Este pedido foi criado com a configuração antiga do cartão. Volte ao checkout e gere um pedido novo.');
+    showMessage('Este pedido foi criado com uma configuração antiga. Volte ao checkout e gere um pedido novo.');
     if (loading) loading.hidden = true;
     return;
   }
@@ -94,36 +107,30 @@ async function renderBrick() {
     return;
   }
 
+  const payerEmail = order.environment === 'test'
+    ? (order.testBuyerEmail || 'test@testuser.com')
+    : String(order.email || '');
   const mp = new window.MercadoPago(order.cardPublicKey, { locale: 'pt-BR' });
   const bricksBuilder = mp.bricks();
 
   const settings = {
     initialization: {
       amount: Number(order.total || 0),
-      payer: {
-        email: order.testBuyerEmail || 'test@testuser.com',
-      },
+      payer: { email: payerEmail },
     },
     customization: {
       visual: {
-        style: {
-          theme: 'dark',
-        },
+        style: { theme: 'dark' },
         texts: {
           formTitle: 'Cartão de crédito',
           formSubmit: 'Pagar com cartão',
           installmentsSectionTitle: 'Escolha as parcelas',
         },
       },
-      paymentMethods: {
-        minInstallments: 1,
-        maxInstallments: 3,
-      },
+      paymentMethods: { minInstallments: 1, maxInstallments: 3 },
     },
     callbacks: {
-      onReady: () => {
-        if (loading) loading.hidden = true;
-      },
+      onReady: () => { if (loading) loading.hidden = true; },
       onSubmit: (cardData, additionalData) => new Promise(async (resolve, reject) => {
         if (messageBox) messageBox.hidden = true;
         try {
@@ -146,15 +153,13 @@ async function renderBrick() {
           showToast(friendly);
           resolve();
         } catch (error) {
-          console.error(error);
           const friendly = error?.message || 'Não foi possível processar o cartão.';
           showMessage(friendly);
           showToast(friendly);
-          reject(error);
+          reject(new Error(friendly));
         }
       }),
-      onError: error => {
-        console.error('Mercado Pago Brick error', error);
+      onError: () => {
         if (loading) loading.hidden = true;
         showMessage('O formulário seguro apresentou um erro. Atualize a página e tente novamente.');
       },
@@ -162,13 +167,8 @@ async function renderBrick() {
   };
 
   try {
-    window.cardPaymentBrickController = await bricksBuilder.create(
-      'cardPayment',
-      'cardPaymentBrick_container',
-      settings,
-    );
-  } catch (error) {
-    console.error(error);
+    window.cardPaymentBrickController = await bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', settings);
+  } catch {
     if (loading) loading.hidden = true;
     showMessage('Não foi possível iniciar o pagamento com cartão. Atualize a página e tente novamente.');
   }
