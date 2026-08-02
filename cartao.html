@@ -37,7 +37,7 @@
           <div id="cardPaymentBrick_container" class="card-brick-container"></div>
           <div id="cardPaymentMessage" class="card-payment-message" role="alert" hidden></div>
 
-          <div class="card-test-note">
+          <div class="card-test-note" hidden>
             <strong>Ambiente de teste</strong>
             <p>Use um cartão de teste, titular <code>APRO</code> e CPF <code>12345678909</code>. Nenhuma cobrança real será feita.</p>
           </div>
@@ -49,7 +49,7 @@
           <div class="summary-line"><span>Total</span><strong id="cardOrderTotal"></strong></div>
           <div class="summary-line"><span>Parcelamento</span><strong>Até 3x sem juros</strong></div>
           <div class="summary-line"><span>E-mail</span><strong id="cardOrderEmail"></strong></div>
-          <p>Ao confirmar, o status será atualizado automaticamente e o estoque será descontado somente se o pagamento for aprovado.</p>
+          <p>Os itens ficam reservados temporariamente durante o pagamento. A reserva é confirmada quando o Mercado Pago aprova a compra e liberada automaticamente se o prazo expirar.</p>
           <a class="button button-outline" href="/checkout.html">Voltar ao checkout</a>
         </aside>
       </div>
@@ -63,8 +63,8 @@
   </footer>
 
   <div class="toast" role="status" aria-live="polite" hidden></div>
-  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <script src="https://sdk.mercadopago.com/js/v2" referrerpolicy="no-referrer"></script>
   <script type="module" src="/assets/js/common.js"></script>
-  <script type="module" src="/assets/js/card-payment.js?v=20260802-1"></script>
+  <script type="module" src="/assets/js/card-payment.js?v=20260802-2"></script>
 </body>
 </html>
