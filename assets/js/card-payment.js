@@ -1,7 +1,6 @@
 import { supabase } from './supabase.js';
 import { money, showToast } from './store.js';
 
-const TEST_PUBLIC_KEY = 'APP_USR-74283ccc-271a-4441-ac0b-94059e14e820';
 const loading = document.querySelector('#cardLoading');
 const messageBox = document.querySelector('#cardPaymentMessage');
 const orderCode = document.querySelector('#cardOrderCode');
@@ -34,6 +33,7 @@ function friendlyStatusDetail(detail) {
     cc_rejected_duplicated_payment: 'Este pagamento já foi processado.',
     cc_rejected_max_attempts: 'O limite de tentativas foi atingido. Gere um novo pedido.',
     cc_rejected_other_reason: 'O cartão foi recusado. Tente outro cartão ou revise os dados.',
+    failed: 'O cartão foi recusado. Revise os dados ou tente outro cartão.',
   };
   return messages[String(detail || '')] || 'Não foi possível aprovar o cartão. Revise os dados e tente novamente.';
 }
@@ -64,6 +64,7 @@ async function processCard(cardData) {
   if (error) throw new Error(await functionErrorMessage(error, 'Não foi possível processar o cartão.'));
   if (data?.error) throw new Error(data.error);
 
+  order.mercadoPagoOrderId = data.mercadoPagoOrderId || '';
   order.paymentId = data.paymentId || '';
   order.paymentStatus = data.status || '';
   order.paymentStatusDetail = data.statusDetail || '';
@@ -81,20 +82,26 @@ async function renderBrick() {
   orderTotal.textContent = money.format(Number(order.total || 0));
   orderEmail.textContent = order.email || 'E-mail do pedido';
 
+  if (!order.cardPublicKey) {
+    showMessage('Este pedido foi criado com a configuração antiga do cartão. Volte ao checkout e gere um pedido novo.');
+    if (loading) loading.hidden = true;
+    return;
+  }
+
   if (!window.MercadoPago) {
     showMessage('Não foi possível carregar o formulário do Mercado Pago. Atualize a página e tente novamente.');
     if (loading) loading.hidden = true;
     return;
   }
 
-  const mp = new window.MercadoPago(TEST_PUBLIC_KEY, { locale: 'pt-BR' });
+  const mp = new window.MercadoPago(order.cardPublicKey, { locale: 'pt-BR' });
   const bricksBuilder = mp.bricks();
 
   const settings = {
     initialization: {
       amount: Number(order.total || 0),
       payer: {
-        email: order.email || '',
+        email: order.testBuyerEmail || 'test@testuser.com',
       },
     },
     customization: {
@@ -117,10 +124,13 @@ async function renderBrick() {
       onReady: () => {
         if (loading) loading.hidden = true;
       },
-      onSubmit: cardData => new Promise(async (resolve, reject) => {
+      onSubmit: (cardData, additionalData) => new Promise(async (resolve, reject) => {
         if (messageBox) messageBox.hidden = true;
         try {
-          const result = await processCard(cardData);
+          const result = await processCard({
+            ...cardData,
+            payment_type_id: additionalData?.paymentTypeId || 'credit_card',
+          });
           if (result.approved) {
             location.href = '/pagamento.html?resultado=sucesso';
             resolve();
@@ -131,7 +141,7 @@ async function renderBrick() {
             resolve();
             return;
           }
-          const friendly = friendlyStatusDetail(result.statusDetail);
+          const friendly = friendlyStatusDetail(result.statusDetail || result.status);
           showMessage(friendly);
           showToast(friendly);
           resolve();
