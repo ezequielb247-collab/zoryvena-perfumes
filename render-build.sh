@@ -20,7 +20,7 @@ fi
 # Bloqueia formatos comuns de chave privada ou segredo de servidor no repositório público.
 if grep -RInE --exclude-dir=.git --exclude-dir=dist \
   --include='*.js' --include='*.json' --include='*.html' --include='*.yaml' --include='*.yml' \
-  '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_(live|test)_[A-Za-z0-9_-]{16,}|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{16,}|MERCADO_PAGO_ACCESS_TOKEN[^[:space:]]*[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{16,})' .; then
+  '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_(live|test)_[A-Za-z0-9_.-]{16,}|SUPABASE_SERVICE_ROLE_KEY.{0,12}[:=].{0,6}[A-Za-z0-9_.-]{16,}|MERCADO_PAGO_ACCESS_TOKEN.{0,40}[:=].{0,6}[A-Za-z0-9_.-]{16,})' .; then
   fail_build 'possível segredo privado encontrado em arquivo público.'
 fi
 
