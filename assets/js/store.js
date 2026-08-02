@@ -154,6 +154,8 @@ export async function createOrder(data) {
     preferenceId: result.preferenceId || '',
     mercadoPagoOrderId: result.mercadoPagoOrderId || '',
     paymentId: result.paymentId || '',
+    cardPublicKey: result.cardPublicKey || '',
+    testBuyerEmail: result.testBuyerEmail || '',
     pix: result.pix || null,
     environment: result.environment,
     createdAt: Date.now(),
