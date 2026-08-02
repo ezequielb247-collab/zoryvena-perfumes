@@ -11,7 +11,8 @@
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/premium.css">
-  <link rel="stylesheet" href="/assets/css/admin.css?v=20260802-1">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=20260802-2">
+  <link rel="stylesheet" href="/assets/css/admin-readiness.css?v=20260802-1">
 </head>
 <body class="admin-body">
   <section class="admin-login" id="adminLogin">
@@ -61,6 +62,15 @@
           <article class="metric-card"><span>Novos para preparar</span><strong id="metricPending">0</strong><small>Aguardando ação</small></article>
           <article class="metric-card"><span>Faturamento aprovado</span><strong id="metricRevenue">R$ 0</strong><small>Somente pagamentos aprovados</small></article>
         </div>
+        <article class="admin-card readiness-card" id="launchReadinessCard">
+          <div class="readiness-header">
+            <div><span class="eyebrow">Auditoria automática</span><h2>Prontidão para lançamento</h2><p>O painel verifica cadastro legal, catálogo, estoque, fotos, pagamentos, frete e comunicação.</p></div>
+            <div class="readiness-score"><strong id="launchReadinessScore">0%</strong><small id="launchReadinessLabel">Verificando...</small></div>
+          </div>
+          <div class="readiness-progress" aria-hidden="true"><span id="launchReadinessBar"></span></div>
+          <div class="readiness-grid" id="launchReadinessList"><p>Carregando checklist...</p></div>
+          <div class="readiness-summary" id="launchReadinessSummary"></div>
+        </article>
         <div class="admin-grid">
           <article class="admin-card"><h2>Estoque baixo</h2><ul class="clean-list" id="lowStock"></ul></article>
           <article class="admin-card"><h2>Pedidos recentes</h2><ul class="clean-list" id="recentOrders"></ul></article>
@@ -94,9 +104,32 @@
       </section>
 
       <section id="settingsView" class="admin-view" hidden>
-        <div class="admin-view-title"><div><h2>Configurações</h2><p>Dados públicos e segurança do painel.</p></div></div>
+        <div class="admin-view-title"><div><h2>Configurações</h2><p>Dados públicos, preparação para lançamento e segurança do painel.</p></div></div>
         <div class="admin-grid">
-          <article class="admin-card"><h2>Dados da loja</h2><form id="settingsForm" class="admin-form"><label>Nome da loja<input name="name"></label><label>Nome curto<input name="short_name"></label><label>Slogan<input name="slogan"></label><label>WhatsApp<input name="whatsapp"></label><label>Instagram<input name="instagram"></label><label>E-mail<input name="email" type="email"></label><label>Frete grátis a partir de<input name="free_shipping_from" type="number" min="0" step="0.01" placeholder="Ex.: 499"></label><label>URL do site<input name="site_url" type="url"></label><button class="button button-dark">Salvar configurações</button><p id="settingsSaved" hidden>Configurações salvas e sincronizadas.</p></form></article>
+          <article class="admin-card"><h2>Dados da loja</h2><form id="settingsForm" class="admin-form">
+            <label>Nome da loja<input name="name"></label>
+            <label>Nome curto<input name="short_name"></label>
+            <label>Slogan<input name="slogan"></label>
+            <label>WhatsApp<input name="whatsapp"></label>
+            <label>Instagram<input name="instagram"></label>
+            <label>E-mail de atendimento<input name="email" type="email"></label>
+            <label>Nome legal do vendedor<input name="legal_name" placeholder="Nome completo ou razão social"></label>
+            <label>CPF ou CNPJ<input name="tax_id" placeholder="Somente após definir o responsável legal"></label>
+            <label>Endereço comercial<textarea name="business_address" rows="3" placeholder="Endereço que será exibido nas políticas"></textarea></label>
+            <label>Horário de atendimento<input name="service_hours" placeholder="Ex.: seg. a sex., 9h às 18h"></label>
+            <label>E-mail para privacidade/LGPD<input name="privacy_contact_email" type="email"></label>
+            <label>Política resumida de entrega<textarea name="shipping_policy" rows="3"></textarea></label>
+            <label>CEP de origem dos envios<input name="shipping_origin_cep" inputmode="numeric" maxlength="9"></label>
+            <label>Operação de entrega<select name="shipping_mode"><option value="pickup_only">Somente retirada em Macaé</option><option value="manual_quote">Cotação manual antes do pagamento</option><option value="automatic">Frete automático integrado</option></select></label>
+            <label>Ambiente do pagamento<select name="payment_environment"><option value="test">Teste — não cobra valores reais</option><option value="production">Produção — cobra valores reais</option></select></label>
+            <label>E-mails automáticos<select name="email_notifications_enabled"><option value="false">Ainda não configurados</option><option value="true">Configurados e testados</option></select></label>
+            <label>Notas e procedência do fornecedor<select name="supplier_docs_verified"><option value="false">Ainda não conferidas</option><option value="true">Conferidas e arquivadas</option></select></label>
+            <label>Políticas revisadas em<input name="policies_updated_at" type="date"></label>
+            <label>Status da loja<select name="launch_status"><option value="preparation">Em preparação</option><option value="soft_launch">Lançamento controlado</option><option value="live">Loja oficialmente aberta</option></select></label>
+            <label>Frete grátis a partir de<input name="free_shipping_from" type="number" min="0" step="0.01" placeholder="Deixe vazio se não estiver ativo"></label>
+            <label>URL do site<input name="site_url" type="url"></label>
+            <button class="button button-dark">Salvar configurações</button><p id="settingsSaved" hidden>Configurações salvas e sincronizadas.</p>
+          </form></article>
           <article class="admin-card"><h2>Senha administrativa</h2><form id="passwordForm" class="admin-form"><p>Use esta área para trocar a senha da conta administrativa.</p><label>Nova senha<input required name="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label><label>Confirmar nova senha<input required name="confirmPassword" type="password" minlength="8" autocomplete="new-password"></label><button class="button button-dark" type="submit">Atualizar senha</button><p id="passwordSaved" hidden>Senha atualizada com sucesso.</p></form></article>
         </div>
       </section>
@@ -119,7 +152,8 @@
   </dialog>
 
   <div class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="/admin/admin.js?v=20260802-1"></script>
+  <script type="module" src="/admin/admin.js?v=20260802-2"></script>
   <script type="module" src="/admin/admin-fixes.js?v=20260802-1"></script>
+  <script type="module" src="/admin/launch-readiness.js?v=20260802-1"></script>
 </body>
 </html>
