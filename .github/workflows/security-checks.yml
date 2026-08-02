@@ -31,7 +31,9 @@ jobs:
         run: |
           set -euo pipefail
           forbidden='SUPABASE_SERVICE_ROLE_KEY|MERCADO_PAGO_ACCESS_TOKEN|MERCADO_PAGO_WEBHOOK_SECRET|sk_(live|test|proj)_[A-Za-z0-9_-]{12,}|APP_USR-[A-Za-z0-9_-]{20,}'
-          if git grep -nE "$forbidden" -- ':!*.md' ':!SECURITY.md'; then
+          if git grep -nE "$forbidden" -- \
+             ':!*.md' \
+             ':!.github/workflows/security-checks.yml'; then
             echo 'Private credential or forbidden secret reference found in tracked source.' >&2
             exit 1
           fi
@@ -48,8 +50,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --include='*.html' --include='*.js' '\bon(click|error|load|submit|focus|mouseover|mouseenter|mouseleave|keydown|keyup)\s*=' . \
-             --exclude-dir=.git --exclude-dir=dist; then
+          if grep -RInE \
+             --exclude-dir=.git \
+             --exclude-dir=dist \
+             --include='*.html' \
+             --include='*.js' \
+             '\bon(click|error|load|submit|focus|mouseover|mouseenter|mouseleave|keydown|keyup)\s*=' .; then
             echo 'Inline event handler found. Use addEventListener instead.' >&2
             exit 1
           fi
