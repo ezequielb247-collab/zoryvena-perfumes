@@ -1,6 +1,7 @@
 import { supabase } from '../assets/js/supabase.js';
 
 const $ = selector => document.querySelector(selector);
+const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function hasText(value) {
   return String(value || '').trim().length > 2;
@@ -51,14 +52,26 @@ async function refreshReadiness() {
   if (!card || $('#adminPanel')?.hidden) return;
 
   try {
-    const [{ data: products, error: productsError }, { data: settings, error: settingsError }] = await Promise.all([
+    const [productsResult, settingsResult, ordersResult] = await Promise.all([
       supabase.from('products').select('id,name,active,cost,price,pix_price,stock,image'),
       supabase.from('store_settings').select('*').eq('id', 1).single(),
+      supabase.from('orders').select('id,status,total,fulfillment_status,archived_at'),
     ]);
-    if (productsError) throw productsError;
-    if (settingsError) throw settingsError;
+    if (productsResult.error) throw productsResult.error;
+    if (settingsResult.error) throw settingsResult.error;
+    if (ordersResult.error) throw ordersResult.error;
 
-    const active = (products || []).filter(product => product.active);
+    const products = productsResult.data || [];
+    const settings = settingsResult.data;
+    const activeOrders = (ordersResult.data || []).filter(order => !order.archived_at);
+    const approvedOrders = activeOrders.filter(order => order.status === 'Pagamento aprovado');
+    const pendingOperations = activeOrders.filter(order => ['Novo pedido', 'Em separação'].includes(order.fulfillment_status));
+
+    if ($('#metricOrders')) $('#metricOrders').textContent = approvedOrders.length;
+    if ($('#metricPending')) $('#metricPending').textContent = pendingOperations.length;
+    if ($('#metricRevenue')) $('#metricRevenue').textContent = money.format(approvedOrders.reduce((sum, order) => sum + Number(order.total || 0), 0));
+
+    const active = products.filter(product => product.active);
     const sellable = active.filter(product => Number(product.price) > 0 && Number(product.stock) > 0);
     const activeWithPrice = active.filter(product => Number(product.price) > 0);
     const activeWithImage = active.filter(product => hasText(product.image));
