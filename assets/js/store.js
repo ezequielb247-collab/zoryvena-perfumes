@@ -26,15 +26,15 @@ export function getProducts() {
 
 export async function syncStoreData() {
   try {
-    const [{ data: products, error: productError }, { data: settings, error: settingsError }] = await Promise.all([
-      supabase.from('storefront_products').select('*').order('rank', { ascending: true }),
-      supabase.from('storefront_settings').select('*').eq('id', 1).maybeSingle(),
+    const [{ data: products, error: productError }, { data: settingsRows, error: settingsError }] = await Promise.all([
+      supabase.rpc('get_storefront_products'),
+      supabase.rpc('get_storefront_settings'),
     ]);
     if (productError) throw productError;
     if (settingsError) throw settingsError;
 
     const mappedProducts = (products || []).map(mapProductRow);
-    const mappedSettings = mapSettingsRow(settings);
+    const mappedSettings = mapSettingsRow(Array.isArray(settingsRows) ? settingsRows[0] : settingsRows);
     const previousProducts = JSON.stringify(load(REMOTE_PRODUCTS_KEY, []));
     const previousSettings = JSON.stringify(load(REMOTE_CONFIG_KEY, {}));
     const nextProducts = JSON.stringify(mappedProducts);
@@ -45,7 +45,7 @@ export async function syncStoreData() {
     const changed = previousProducts !== nextProducts || previousSettings !== nextSettings;
     window.dispatchEvent(new CustomEvent('zoryvena:data', { detail: { changed } }));
     return changed;
-  } catch (error) {
+  } catch {
     console.warn('Não foi possível sincronizar os dados públicos da loja.');
     return false;
   }
