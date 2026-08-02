@@ -140,14 +140,20 @@ export async function createOrder(data) {
     throw new Error(details || 'Não foi possível iniciar o pagamento.');
   }
   if (result?.error) throw new Error(result.error);
+
   const order = {
     id: result.orderCode,
     databaseId: result.id,
     total: Number(result.total || 0),
     paymentMethod,
-    paymentUrl: result.paymentUrl,
-    preferenceId: result.preferenceId,
+    paymentMode: result.paymentMode || paymentMethod,
+    paymentUrl: result.paymentUrl || result.pix?.ticketUrl || '',
+    preferenceId: result.preferenceId || '',
+    mercadoPagoOrderId: result.mercadoPagoOrderId || '',
+    paymentId: result.paymentId || '',
+    pix: result.pix || null,
     environment: result.environment,
+    createdAt: Date.now(),
     ...data,
   };
   sessionStorage.setItem('zoryvena.last-order', JSON.stringify(order));
