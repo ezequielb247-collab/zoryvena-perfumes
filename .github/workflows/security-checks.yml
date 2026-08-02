@@ -31,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           forbidden='-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|(SUPABASE_SERVICE_ROLE_KEY|MERCADO_PAGO_ACCESS_TOKEN|MERCADO_PAGO_WEBHOOK_SECRET)"?[[:space:]]*[:=][[:space:]]*"?[A-Za-z0-9_.-]{16,}|sk_(live|test|proj)_[A-Za-z0-9_-]{12,}|APP_USR-[A-Za-z0-9_-]{20,}'
-          if git grep -nE "$forbidden" -- \
+          if git grep -nE -e "$forbidden" -- \
              ':!*.md' \
              ':!.github/workflows/security-checks.yml'; then
             echo 'Private credential or forbidden secret value found in tracked source.' >&2
