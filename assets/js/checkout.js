@@ -166,7 +166,7 @@ form?.addEventListener('submit', async event => {
   const original = button?.textContent;
   if (button) {
     button.disabled = true;
-    button.textContent = paymentMethod() === 'pix' ? 'Gerando QR Code…' : 'Gerando pagamento…';
+    button.textContent = paymentMethod() === 'pix' ? 'Gerando QR Code…' : 'Preparando cartão…';
   }
 
   try {
@@ -189,6 +189,11 @@ form?.addEventListener('submit', async event => {
 
     if (order.paymentMode === 'pix' && (order.pix?.qrCode || order.pix?.ticketUrl)) {
       location.href = '/pagamento.html?resultado=pix';
+      return;
+    }
+
+    if (order.paymentMode === 'card_brick') {
+      location.href = '/cartao.html';
       return;
     }
 
