@@ -42,25 +42,56 @@ function stopTimers() {
   statusTimer = null;
 }
 
+function minimizeStoredOrder(status = '') {
+  if (!lastOrder) return;
+  const minimal = {
+    id: String(lastOrder.id || '').slice(0, 60),
+    paymentMethod: lastOrder.paymentMethod === 'card' ? 'card' : 'pix',
+    environment: lastOrder.environment === 'production' ? 'production' : 'test',
+    paymentStatus: String(status || '').slice(0, 80),
+    completedAt: Date.now(),
+  };
+  sessionStorage.setItem('zoryvena.last-order', JSON.stringify(minimal));
+}
+
+function safeMercadoPagoUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    const host = url.hostname.toLowerCase();
+    const allowed = host === 'mercadopago.com'
+      || host.endsWith('.mercadopago.com')
+      || host === 'mercadopago.com.br'
+      || host.endsWith('.mercadopago.com.br')
+      || host === 'mercadolivre.com.br'
+      || host.endsWith('.mercadolivre.com.br');
+    return url.protocol === 'https:' && allowed ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 function configureOrderSupport() {
   if (lastOrder?.id) {
-    order.textContent = `Pedido ${lastOrder.id}`;
-    whatsapp.href = whatsappUrl(`Olá! Gostaria de atendimento sobre o pedido ${lastOrder.id}.`);
+    const code = String(lastOrder.id).slice(0, 60);
+    order.textContent = `Pedido ${code}`;
+    whatsapp.href = whatsappUrl(`Olá! Gostaria de atendimento sobre o pedido ${code}.`);
     whatsapp.target = '_blank';
     whatsapp.rel = 'noopener noreferrer';
   } else {
-    order.textContent = params.get('external_reference') ? `Referência: ${params.get('external_reference')}` : '';
+    const reference = String(params.get('external_reference') || '').slice(0, 80);
+    order.textContent = reference ? `Referência: ${reference}` : '';
     whatsapp.href = '/contato.html';
   }
 }
 
 function renderQrCode(pix) {
   if (!pixQrVisual) return;
-  pixQrVisual.innerHTML = '';
+  pixQrVisual.replaceChildren();
 
-  if (pix.qrCodeBase64) {
+  const base64 = String(pix.qrCodeBase64 || '');
+  if (base64 && base64.length <= 1_000_000 && /^[A-Za-z0-9+/=]+$/.test(base64)) {
     const image = document.createElement('img');
-    image.src = `data:image/png;base64,${pix.qrCodeBase64}`;
+    image.src = `data:image/png;base64,${base64}`;
     image.alt = 'QR Code Pix do pedido';
     image.width = 258;
     image.height = 258;
@@ -68,9 +99,10 @@ function renderQrCode(pix) {
     return;
   }
 
-  if (pix.qrCode && window.QRCode) {
+  const qrCode = String(pix.qrCode || '').slice(0, 5000);
+  if (qrCode && window.QRCode) {
     new window.QRCode(pixQrVisual, {
-      text: pix.qrCode,
+      text: qrCode,
       width: 258,
       height: 258,
       correctLevel: window.QRCode.CorrectLevel.M,
@@ -82,7 +114,7 @@ function renderQrCode(pix) {
 }
 
 function startCountdown(orderData) {
-  const seconds = Number(orderData?.pix?.expiresInSeconds || 1800);
+  const seconds = Math.min(3600, Math.max(60, Number(orderData?.pix?.expiresInSeconds || 1800)));
   const createdAt = Number(orderData?.createdAt || Date.now());
   const expiresAt = createdAt + seconds * 1000;
 
@@ -109,7 +141,7 @@ function startCountdown(orderData) {
 }
 
 async function copyPixCode() {
-  const code = String(lastOrder?.pix?.qrCode || '');
+  const code = String(lastOrder?.pix?.qrCode || '').slice(0, 5000);
   if (!code) return;
 
   try {
@@ -133,7 +165,7 @@ function renderPaymentApproved(statusData = {}) {
 
   if (pixPayment) pixPayment.hidden = true;
   if (paymentConfirmed) paymentConfirmed.hidden = false;
-  if (confirmedOrderCode) confirmedOrderCode.textContent = statusData.orderCode || lastOrder?.id || '';
+  if (confirmedOrderCode) confirmedOrderCode.textContent = String(statusData.orderCode || lastOrder?.id || '').slice(0, 60);
 
   paymentCard?.classList.add('payment-card-approved');
   if (eyebrow) eyebrow.hidden = true;
@@ -145,6 +177,7 @@ function renderPaymentApproved(statusData = {}) {
   if (environmentNote && lastOrder?.environment === 'test') {
     environmentNote.textContent = 'Teste concluído: o webhook e a atualização automática do pedido funcionaram corretamente.';
   }
+  minimizeStoredOrder('Pagamento aprovado');
 }
 
 function renderTerminalStatus(statusData) {
@@ -160,14 +193,15 @@ function renderTerminalStatus(statusData) {
   eyebrow.hidden = false;
   title.hidden = false;
   eyebrow.textContent = 'Pagamento não concluído';
-  title.textContent = statusData.status || 'Pagamento não aprovado';
+  title.textContent = String(statusData.status || 'Pagamento não aprovado').slice(0, 80);
   message.textContent = 'O pagamento não foi confirmado. Você pode voltar ao checkout e gerar uma nova cobrança.';
   primary.textContent = 'Tentar novamente';
   primary.href = '/checkout.html';
+  minimizeStoredOrder(statusData.status || 'Pagamento não concluído');
 }
 
 async function checkOrderStatus() {
-  if (!lastOrder?.databaseId || statusRequestRunning || finalStateRendered) return;
+  if (!lastOrder?.databaseId || !lastOrder?.statusToken || statusRequestRunning || finalStateRendered) return;
   statusRequestRunning = true;
   try {
     const statusData = await getOrderStatus(lastOrder);
@@ -179,8 +213,7 @@ async function checkOrderStatus() {
     if (!finalStateRendered && pixCopyFeedback) {
       pixCopyFeedback.textContent = 'Aguardando a confirmação automática do pagamento…';
     }
-  } catch (error) {
-    console.warn('Não foi possível atualizar o status do pedido.', error);
+  } catch {
     if (!finalStateRendered && pixCopyFeedback) {
       pixCopyFeedback.textContent = 'Pagamento gerado. A confirmação será atualizada automaticamente.';
     }
@@ -190,7 +223,7 @@ async function checkOrderStatus() {
 }
 
 function startStatusMonitoring() {
-  if (!lastOrder?.databaseId) return;
+  if (!lastOrder?.databaseId || !lastOrder?.statusToken) return;
   checkOrderStatus();
   statusTimer = setInterval(() => {
     if (!document.hidden) checkOrderStatus();
@@ -207,21 +240,22 @@ if (isPix) {
   const actualOrderTotal = Number(pix.actualOrderTotal || lastOrder.total || 0);
 
   eyebrow.textContent = 'Pagamento por Pix';
-  title.textContent = 'Escaneie o QR Code para testar';
+  title.textContent = lastOrder.environment === 'test' ? 'Escaneie o QR Code para testar' : 'Escaneie o QR Code para pagar';
   message.textContent = pix.simulated
     ? `O sandbox do Mercado Pago exige um Pix predefinido de ${money.format(chargedAmount)}. O total real do pedido é ${money.format(actualOrderTotal)} e será usado somente quando ativarmos a produção.`
     : 'Após o pagamento, a confirmação será processada pelo Mercado Pago e vinculada ao seu pedido.';
 
   pixPayment.hidden = false;
   pixAmount.textContent = money.format(chargedAmount);
-  pixCode.value = pix.qrCode || '';
+  pixCode.value = String(pix.qrCode || '').slice(0, 5000);
   renderQrCode(pix);
   startCountdown(lastOrder);
   startStatusMonitoring();
   copyPix?.addEventListener('click', copyPixCode);
 
-  if (pix.ticketUrl) {
-    openPixTicket.href = pix.ticketUrl;
+  const ticketUrl = safeMercadoPagoUrl(pix.ticketUrl);
+  if (ticketUrl) {
+    openPixTicket.href = ticketUrl;
     openPixTicket.hidden = false;
   }
 
@@ -235,6 +269,7 @@ if (isPix) {
   message.textContent = 'O carrinho foi mantido para que você possa tentar novamente ou escolher outra forma de pagamento.';
   primary.textContent = 'Tentar novamente';
   primary.href = '/checkout.html';
+  minimizeStoredOrder('Pagamento não concluído');
 } else {
   saveCart([]);
   eyebrow.textContent = 'Pagamento pendente';
