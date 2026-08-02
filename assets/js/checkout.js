@@ -166,7 +166,7 @@ form?.addEventListener('submit', async event => {
   const original = button?.textContent;
   if (button) {
     button.disabled = true;
-    button.textContent = 'Gerando pagamento…';
+    button.textContent = paymentMethod() === 'pix' ? 'Gerando QR Code…' : 'Gerando pagamento…';
   }
 
   try {
@@ -175,6 +175,7 @@ form?.addEventListener('submit', async event => {
     data.payment = paymentMethod();
     data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada em Macaé — grátis' : 'Entrega com frete sob consulta';
     data.whatsapp = digits(data.whatsapp);
+    data.email = String(data.email || '').trim().toLowerCase();
 
     if (data.delivery === 'shipping') {
       data.cep = digits(data.cep);
@@ -185,6 +186,12 @@ form?.addEventListener('submit', async event => {
     }
 
     const order = await createOrder(data);
+
+    if (order.paymentMode === 'pix' && (order.pix?.qrCode || order.pix?.ticketUrl)) {
+      location.href = '/pagamento.html?resultado=pix';
+      return;
+    }
+
     if (!order.paymentUrl) throw new Error('O endereço de pagamento não foi gerado.');
     location.href = order.paymentUrl;
   } catch (error) {
