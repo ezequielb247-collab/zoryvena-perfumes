@@ -112,11 +112,17 @@ async function copyPixCode() {
 if (isPix) {
   saveCart([]);
   const pix = lastOrder.pix;
+  const chargedAmount = Number(pix.chargedAmount || lastOrder.total || 0);
+  const actualOrderTotal = Number(pix.actualOrderTotal || lastOrder.total || 0);
+
   eyebrow.textContent = 'Pagamento por Pix';
-  title.textContent = 'Escaneie o QR Code para pagar';
-  message.textContent = 'Após o pagamento, a confirmação será processada pelo Mercado Pago e vinculada ao seu pedido.';
+  title.textContent = 'Escaneie o QR Code para testar';
+  message.textContent = pix.simulated
+    ? `O sandbox do Mercado Pago exige um Pix predefinido de ${money.format(chargedAmount)}. O total real do pedido é ${money.format(actualOrderTotal)} e será usado somente quando ativarmos a produção.`
+    : 'Após o pagamento, a confirmação será processada pelo Mercado Pago e vinculada ao seu pedido.';
+
   pixPayment.hidden = false;
-  pixAmount.textContent = money.format(Number(lastOrder.total || 0));
+  pixAmount.textContent = money.format(chargedAmount);
   pixCode.value = pix.qrCode || '';
   renderQrCode(pix);
   startCountdown(lastOrder);
