@@ -2,12 +2,33 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = 'https://ajyultndtauabfufrmfr.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_nM8F8D8JopLP0BiIEdJInQ_bQBRDw_I';
+const isAdminContext = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+
+function createMemoryStorage() {
+  const values = new Map();
+  return {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) { values.set(key, String(value)); },
+    removeItem(key) { values.delete(key); },
+  };
+}
+
+// A sessão administrativa existe somente na aba do painel. As páginas públicas
+// usam armazenamento em memória e nunca carregam o token do administrador.
+const authStorage = isAdminContext ? window.sessionStorage : createMemoryStorage();
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+    storage: authStorage,
+    storageKey: isAdminContext ? 'zoryvena-admin-auth' : 'zoryvena-public-anon',
+    persistSession: isAdminContext,
+    autoRefreshToken: isAdminContext,
+    detectSessionInUrl: isAdminContext,
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'zoryvena-store/2026-08-security',
+    },
   },
 });
 
