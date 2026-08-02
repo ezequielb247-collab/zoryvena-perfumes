@@ -5,6 +5,38 @@ const modal = document.querySelector('#orderModal');
 const saveButton = document.querySelector('#saveOrderManagement');
 const settingsForm = document.querySelector('#settingsForm');
 
+function applyVirtualStoreLabels() {
+  const addressField = settingsForm?.elements?.business_address;
+  const addressLabel = addressField?.closest('label');
+
+  if (addressLabel) {
+    const firstTextNode = [...addressLabel.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+    if (firstTextNode) firstTextNode.textContent = 'Endereço legal para correspondência';
+    addressField.placeholder = 'Endereço real do responsável ou da empresa para identificação legal e correspondência';
+
+    if (!addressLabel.querySelector('[data-virtual-address-note]')) {
+      const note = document.createElement('small');
+      note.dataset.virtualAddressNote = '';
+      note.textContent = 'A Zoryvena é exclusivamente virtual. Este endereço não será divulgado como loja física nem como local de atendimento ao público.';
+      addressField.after(note);
+    }
+  }
+
+  document.querySelectorAll('.readiness-item').forEach(card => {
+    const title = card.querySelector('strong');
+    const detail = card.querySelector('p');
+    if (title?.textContent === 'Endereço e canais oficiais') {
+      title.textContent = 'Endereço legal e canais online';
+    }
+    if (detail?.textContent === 'Endereço, e-mail e WhatsApp disponíveis.') {
+      detail.textContent = 'Endereço de identificação legal, e-mail e WhatsApp disponíveis. A loja não possui atendimento presencial.';
+    }
+    if (detail?.textContent === 'Falta endereço comercial ou canal oficial.') {
+      detail.textContent = 'Falta o endereço legal para correspondência ou algum canal online.';
+    }
+  });
+}
+
 saveButton?.addEventListener('click', () => {
   if (modal?.open) modal.close();
 }, { capture: true });
@@ -26,7 +58,7 @@ settingsForm?.addEventListener('submit', async event => {
     && String(data.business_address || '').trim();
 
   if (data.payment_environment === 'production' && !legalReady) {
-    showToast('Preencha nome legal, CPF/CNPJ e endereço antes de preparar o ambiente produtivo.');
+    showToast('Preencha nome legal, CPF/CNPJ e endereço legal para correspondência antes de preparar o ambiente produtivo.');
     return;
   }
 
@@ -63,3 +95,10 @@ settingsForm?.addEventListener('submit', async event => {
     }
   }
 }, { capture: true });
+
+const readinessList = document.querySelector('#launchReadinessList');
+if (readinessList) {
+  new MutationObserver(applyVirtualStoreLabels).observe(readinessList, { childList: true, subtree: true });
+}
+
+applyVirtualStoreLabels();
