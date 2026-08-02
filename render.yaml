@@ -13,18 +13,18 @@ services:
         name: Content-Security-Policy
         value: >-
           default-src 'self';
-          script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.mercadopago.com https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com;
+          script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           style-src 'self' 'unsafe-inline';
-          img-src 'self' data: blob: https://ajyultndtauabfufrmfr.supabase.co https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com;
-          connect-src 'self' https://ajyultndtauabfufrmfr.supabase.co wss://ajyultndtauabfufrmfr.supabase.co https://viacep.com.br https://api.mercadopago.com https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com;
-          frame-src https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com;
+          img-src 'self' data: blob: https://ajyultndtauabfufrmfr.supabase.co https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
+          connect-src 'self' https://ajyultndtauabfufrmfr.supabase.co wss://ajyultndtauabfufrmfr.supabase.co https://viacep.com.br https://api.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
+          frame-src https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           worker-src 'self' blob:;
           font-src 'self' data:;
           media-src 'self';
           manifest-src 'self';
           object-src 'none';
           base-uri 'self';
-          form-action 'self' https://*.mercadopago.com;
+          form-action 'self' https://*.mercadopago.com https://*.mercadopago.com.br;
           frame-ancestors 'none';
           upgrade-insecure-requests
       - path: /*
