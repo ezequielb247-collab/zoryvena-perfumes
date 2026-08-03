@@ -6,7 +6,9 @@ import { showToast } from '../assets/js/store.js';
 const modal = document.querySelector('#orderModal');
 const saveButton = document.querySelector('#saveOrderManagement');
 const settingsForm = document.querySelector('#settingsForm');
+const settingsButton = settingsForm?.querySelector('button');
 const PRODUCT_BUCKET = 'product-images';
+let settingsSaving = false;
 
 function numberOrNull(value) {
   if (value === '' || value == null) return null;
@@ -172,7 +174,8 @@ couponForm?.addEventListener('submit', async event => {
   if (!couponForm.reportValidity()) return;
 
   const data = Object.fromEntries(new FormData(couponForm));
-  const button = couponForm.querySelector('button[type="submit"]');
+  const button = couponForm.querySelector('button[type="submit"], button:not([type])');
+  if (!button) return;
   button.disabled = true;
   try {
     const { error } = await supabase.rpc('admin_create_coupon', {
@@ -192,13 +195,31 @@ couponForm?.addEventListener('submit', async event => {
   }
 }, { capture: true });
 
-settingsForm?.addEventListener('submit', async event => {
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  if (!settingsForm.reportValidity()) return;
+function settingsFieldName(field) {
+  const label = field?.closest('label');
+  if (!label) return field?.name || 'campo';
+  const textNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+  return String(textNode?.textContent || field?.name || 'campo').trim();
+}
 
+function validateSettingsForm() {
+  if (!settingsForm) return false;
+  if (settingsForm.checkValidity()) return true;
+  const invalid = settingsForm.querySelector(':invalid');
+  if (invalid) {
+    invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => invalid.focus({ preventScroll: true }), 250);
+    const detail = invalid.validationMessage ? ` ${invalid.validationMessage}` : '';
+    showToast(`Revise o campo “${settingsFieldName(invalid)}”.${detail}`);
+  } else {
+    showToast('Revise os campos destacados antes de salvar.');
+  }
+  return false;
+}
+
+function buildSettingsPayload() {
   const data = Object.fromEntries(new FormData(settingsForm));
-  const payload = {
+  return {
     name: String(data.name || '').trim(),
     short_name: String(data.short_name || '').trim(),
     slogan: String(data.slogan || '').trim(),
@@ -221,13 +242,24 @@ settingsForm?.addEventListener('submit', async event => {
     free_shipping_from: numberOrNull(data.free_shipping_from),
     site_url: String(data.site_url || '').trim(),
   };
+}
 
-  const button = settingsForm.querySelector('button[type="submit"]');
-  button.disabled = true;
-  button.textContent = 'Salvando…';
+async function saveSettingsSecurely() {
+  if (!settingsForm || !settingsButton || settingsSaving) return;
+  if (!validateSettingsForm()) return;
+
+  settingsSaving = true;
+  settingsButton.disabled = true;
+  settingsButton.textContent = 'Salvando…';
+  showToast('Salvando configurações…');
+
   try {
-    const { error } = await supabase.rpc('admin_update_store_settings', { p_data: payload });
+    const { data, error } = await supabase.rpc('admin_update_store_settings', {
+      p_data: buildSettingsPayload(),
+    });
     if (error) throw error;
+    if (!data?.ok) throw new Error('O servidor não confirmou a atualização.');
+
     const saved = document.querySelector('#settingsSaved');
     if (saved) {
       saved.hidden = false;
@@ -236,12 +268,35 @@ settingsForm?.addEventListener('submit', async event => {
     showToast('Configurações salvas com validação e auditoria.');
     document.querySelector('#refreshAdmin')?.click();
   } catch (error) {
-    console.error(error);
+    console.error('settings save failed', error);
     showToast(error?.message || 'Não foi possível salvar as configurações.');
   } finally {
-    button.disabled = false;
-    button.textContent = 'Salvar configurações';
+    settingsSaving = false;
+    settingsButton.disabled = false;
+    settingsButton.textContent = 'Salvar configurações';
   }
+}
+
+if (settingsButton) {
+  settingsButton.type = 'submit';
+  settingsButton.id = 'saveSettingsButton';
+  settingsButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void saveSettingsSecurely();
+  }, { capture: true });
+}
+
+settingsForm?.addEventListener('submit', event => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  void saveSettingsSecurely();
+}, { capture: true });
+
+settingsForm?.addEventListener('invalid', event => {
+  const field = event.target;
+  if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) return;
+  showToast(`Revise o campo “${settingsFieldName(field)}”.`);
 }, { capture: true });
 
 const readinessList = document.querySelector('#launchReadinessList');
