@@ -53,7 +53,15 @@ export async function syncStoreData() {
 
 export function getProduct(id) { return getProducts().find(product => product.id === id); }
 export function isPriced(product) { return Number.isFinite(Number(product?.price)) && Number(product.price) > 0; }
-export function isAvailable(product) { return isPriced(product) && Number(product.stock) > 0; }
+export function readyStock(product) { return Math.max(0, Math.trunc(Number(product?.stock || 0))); }
+export function preorderCapacity(product) {
+  return product?.preorderEnabled ? Math.max(0, Math.trunc(Number(product?.preorderLimit || 0))) : 0;
+}
+export function maxPurchasableQuantity(product) { return readyStock(product) + preorderCapacity(product); }
+export function isAvailable(product) { return isPriced(product) && maxPurchasableQuantity(product) > 0; }
+export function requiresPreorder(product, quantity = 1) {
+  return Math.max(1, Number(quantity || 1)) > readyStock(product) && preorderCapacity(product) > 0;
+}
 export function priceText(product) { return isPriced(product) ? money.format(Number(product.price)) : 'Consulte o valor'; }
 export function installmentText(product, installments = 3) {
   if (!isPriced(product)) return '';
@@ -64,8 +72,16 @@ export function pixPriceText(product) {
   return Number.isFinite(value) && value > 0 ? `${money.format(value)} no Pix` : '';
 }
 export function availabilityText(product) {
-  if (Number(product?.stock) > 0) return `${product.stock} em estoque`;
-  return isPriced(product) ? 'Estoque sob consulta' : 'Consulte disponibilidade';
+  const stock = readyStock(product);
+  const preorder = preorderCapacity(product);
+  if (stock > 0 && preorder > 0) {
+    return stock === 1
+      ? '1 unidade à pronta entrega · também disponível sob encomenda'
+      : `${stock} unidades à pronta entrega · também disponível sob encomenda`;
+  }
+  if (stock > 0) return stock === 1 ? '1 unidade à pronta entrega' : `${stock} unidades à pronta entrega`;
+  if (preorder > 0) return 'Sob encomenda · pedido ao fornecedor após o pagamento';
+  return isPriced(product) ? 'Indisponível no momento' : 'Consulte disponibilidade';
 }
 export function productUrl(product) {
   const id = String(product?.id || '');
@@ -92,10 +108,11 @@ export function getCart() { return load(KEYS.cart, []); }
 export function saveCart(cart) { save(KEYS.cart, cart); window.dispatchEvent(new Event('zoryvena:state')); }
 export function addToCart(product, quantity = 1) {
   if (!isAvailable(product)) return false;
+  const maximum = maxPurchasableQuantity(product);
   const cart = getCart();
   const item = cart.find(entry => entry.id === product.id);
-  if (item) item.quantity = Math.min(Number(product.stock), item.quantity + quantity);
-  else cart.push({ id: product.id, quantity });
+  if (item) item.quantity = Math.min(maximum, Math.max(1, Number(item.quantity || 1) + Number(quantity || 1)));
+  else cart.push({ id: product.id, quantity: Math.min(maximum, Math.max(1, Number(quantity || 1))) });
   saveCart(cart);
   return true;
 }
@@ -104,11 +121,16 @@ export function updateCart(id, quantity) {
   const cart = getCart();
   const item = cart.find(entry => entry.id === id);
   if (!item || !product) return;
-  item.quantity = Math.max(1, Math.min(Number(product.stock || 1), Number(quantity || 1)));
+  const maximum = Math.max(1, maxPurchasableQuantity(product));
+  item.quantity = Math.max(1, Math.min(maximum, Number(quantity || 1)));
   saveCart(cart);
 }
 export function removeFromCart(id) { saveCart(getCart().filter(item => item.id !== id)); }
-export function cartDetails() { return getCart().map(item => ({ ...item, product: getProduct(item.id) })).filter(item => item.product); }
+export function cartDetails() {
+  return getCart()
+    .map(item => ({ ...item, product: getProduct(item.id) }))
+    .filter(item => item.product && isAvailable(item.product));
+}
 export function productPriceForPayment(product, paymentMethod = 'card') {
   const pixPrice = Number(product?.pixPrice);
   if (paymentMethod === 'pix' && Number.isFinite(pixPrice) && pixPrice > 0) return pixPrice;
@@ -190,6 +212,8 @@ export async function createOrder(data) {
     pix: result.pix || null,
     environment: result.environment,
     reservationExpiresAt: result.reservationExpiresAt || '',
+    containsPreorder: Boolean(result.containsPreorder),
+    containsReadyStock: Boolean(result.containsReadyStock),
     createdAt: Date.now(),
     ...data,
   };
