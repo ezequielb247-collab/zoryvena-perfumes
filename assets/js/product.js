@@ -1,8 +1,19 @@
-import { getProduct, addToCart, isAvailable, priceText, installmentText, pixPriceText, availabilityText, productWhatsapp, getProducts, showToast } from './store.js';
+import {
+  getProduct,
+  addToCart,
+  isAvailable,
+  priceText,
+  installmentText,
+  pixPriceText,
+  availabilityText,
+  productWhatsapp,
+  getProducts,
+  showToast,
+  syncStoreData,
+} from './store.js';
 import { media, productCard, escapeHtml } from './components.js';
 
 const id = document.body.dataset.productId;
-const product = getProduct(id);
 const container = document.querySelector('#productPage');
 
 function noteStage(number, title, timing, explanation, notes) {
@@ -16,9 +27,12 @@ function noteStage(number, title, timing, explanation, notes) {
   </article>`;
 }
 
-if (!product) {
-  container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
-} else {
+function renderProduct(product) {
+  if (!product) {
+    container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
+    return;
+  }
+
   const topNotes = product.topNotes || product.notes?.top;
   const heartNotes = product.heartNotes || product.notes?.heart;
   const baseNotes = product.baseNotes || product.notes?.base;
@@ -67,3 +81,14 @@ if (!product) {
   const related = getProducts().filter(item => item.id !== product.id && (item.gender === product.gender || item.family === product.family)).slice(0, 4);
   document.querySelector('#relatedProducts').innerHTML = related.map(item => productCard(item)).join('');
 }
+
+async function initializeProductPage() {
+  let product = getProduct(id);
+  if (!product) {
+    await syncStoreData();
+    product = getProduct(id);
+  }
+  renderProduct(product);
+}
+
+initializeProductPage();
