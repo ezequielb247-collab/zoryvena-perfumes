@@ -1,5 +1,13 @@
 import { getFavorites, getCompare, priceText, installmentText, pixPriceText, availabilityText, productImage, productUrl } from './store.js';
 
+const VERIFIED_PRODUCT_IMAGE_HOSTS = new Set([
+  'images.tcdn.com.br',
+  'orientalaromas.com',
+  'zaoud.it',
+  'media.zid.store',
+  'lattafa-brasil.com',
+]);
+
 export function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
@@ -21,12 +29,27 @@ function safeVisual(value) {
   return allowed.has(visual) ? visual : 'amber';
 }
 
+function verifiedProductImage(product) {
+  const managed = productImage(product);
+  if (managed) return managed;
+
+  const raw = String(product?.image || '').trim();
+  if (!raw.startsWith('https://')) return '';
+  try {
+    const url = new URL(raw);
+    if (!VERIFIED_PRODUCT_IMAGE_HOSTS.has(url.host)) return '';
+    return url.href;
+  } catch {
+    return '';
+  }
+}
+
 export function media(product, size = '') {
-  const image = productImage(product);
+  const image = verifiedProductImage(product);
   const safeSize = new Set(['', 'large', 'thumb', 'compare']).has(size) ? size : '';
   const placeholder = `<div class="product-placeholder visual-${safeVisual(product.visual)}"><span>${escapeHtml(product.brand)}</span><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.volume)}</small></div>`;
   if (image) {
-    return `<div class="product-media ${safeSize}"><img data-product-image src="${escapeHtml(image)}" alt="${escapeHtml(product.brand)} ${escapeHtml(product.name)}" loading="lazy" decoding="async">${placeholder}</div>`;
+    return `<div class="product-media ${safeSize}"><img data-product-image src="${escapeHtml(image)}" alt="${escapeHtml(product.brand)} ${escapeHtml(product.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">${placeholder}</div>`;
   }
   return `<div class="product-media ${safeSize} image-error">${placeholder}</div>`;
 }
