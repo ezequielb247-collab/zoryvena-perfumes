@@ -1,7 +1,7 @@
 import { getProducts, getFavorites, getCompare, clearCompare, showToast } from './store.js';
 import { productCard, emptyState } from './components.js';
 
-const all = getProducts();
+let all = getProducts();
 const grid = document.querySelector('#catalogGrid');
 const form = document.querySelector('#catalogFilters');
 const resultCount = document.querySelector('#resultCount');
@@ -16,6 +16,8 @@ function unique(key) {
 function fillSelect(selector, values) {
   const element = document.querySelector(selector);
   if (!element) return;
+  const current = element.value;
+  while (element.options.length > 1) element.remove(1);
   const fragment = document.createDocumentFragment();
   values.forEach(value => {
     const option = document.createElement('option');
@@ -24,11 +26,16 @@ function fillSelect(selector, values) {
     fragment.appendChild(option);
   });
   element.appendChild(fragment);
+  if ([...element.options].some(option => option.value === current)) element.value = current;
 }
 
-fillSelect('#brandFilter', unique('brand'));
-fillSelect('#familyFilter', unique('family'));
-fillSelect('#climateFilter', unique('climate'));
+function refreshFilterOptions() {
+  fillSelect('#brandFilter', unique('brand'));
+  fillSelect('#familyFilter', unique('family'));
+  fillSelect('#climateFilter', unique('climate'));
+}
+
+refreshFilterOptions();
 
 const requestedGender = params.get('genero');
 const genderFilter = document.querySelector('#genderFilter');
@@ -84,4 +91,9 @@ document.querySelector('#clearCompare').addEventListener('click', () => {
   showToast('Comparação limpa.');
 });
 window.addEventListener('zoryvena:state', updateCompareTray);
+window.addEventListener('zoryvena:data', () => {
+  all = getProducts();
+  refreshFilterOptions();
+  render();
+});
 render();
