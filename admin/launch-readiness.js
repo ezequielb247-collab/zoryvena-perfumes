@@ -65,9 +65,9 @@ async function refreshReadiness() {
 
   try {
     const [productsResult, settingsResult, ordersResult, factorsResult] = await Promise.all([
-      supabase.from('products').select('id,name,active,cost,price,pix_price,stock,image'),
+      supabase.from('products').select('id,name,active,cost,price,pix_price,stock,image,preorder_enabled,preorder_limit,supplier_availability'),
       supabase.from('store_settings').select('*').eq('id', 1).single(),
-      supabase.from('orders').select('id,status,total,fulfillment_status,archived_at'),
+      supabase.from('orders').select('id,status,total,fulfillment_status,archived_at,contains_preorder,contains_ready_stock'),
       supabase.auth.mfa.listFactors(),
     ]);
     if (productsResult.error) throw productsResult.error;
@@ -79,7 +79,10 @@ async function refreshReadiness() {
     const settings = settingsResult.data;
     const activeOrders = (ordersResult.data || []).filter(order => !order.archived_at);
     const approvedOrders = activeOrders.filter(order => order.status === 'Pagamento aprovado');
-    const pendingOperations = activeOrders.filter(order => ['Novo pedido', 'Em separação'].includes(order.fulfillment_status));
+    const pendingOperations = activeOrders.filter(order => [
+      'Novo pedido', 'Aguardando pedido ao fornecedor', 'Pedido realizado ao fornecedor',
+      'Aguardando chegada do fornecedor', 'Em separação',
+    ].includes(order.fulfillment_status));
     const allFactors = Array.isArray(factorsResult.data?.all) ? factorsResult.data.all : [];
     const mfaReady = allFactors.some(factor => factor.status === 'verified' && factor.factor_type === 'totp');
 
@@ -88,10 +91,16 @@ async function refreshReadiness() {
     if ($('#metricRevenue')) $('#metricRevenue').textContent = money.format(approvedOrders.reduce((sum, order) => sum + Number(order.total || 0), 0));
 
     const active = products.filter(product => product.active);
-    const sellable = active.filter(product => Number(product.price) > 0 && Number(product.stock) > 0);
+    const readyStockProducts = active.filter(product => Number(product.stock) > 0);
+    const preorderProducts = active.filter(product => product.preorder_enabled && Number(product.preorder_limit) > 0);
+    const sellable = active.filter(product => Number(product.price) > 0 && (
+      Number(product.stock) > 0 || (product.preorder_enabled && Number(product.preorder_limit) > 0)
+    ));
     const activeWithPrice = active.filter(product => Number(product.price) > 0);
     const activeWithImage = active.filter(product => hasText(product.image));
     const activeWithCost = active.filter(product => Number(product.cost) > 0);
+    const supplierConfirmed = preorderProducts.filter(product => product.supplier_availability === 'Disponível no fornecedor');
+    const readyUnits = active.reduce((sum, product) => sum + Math.max(0, Number(product.stock || 0)), 0);
     const legalReady = hasText(settings.legal_name) && hasText(settings.tax_id);
     const contactReady = hasText(settings.business_address) && hasText(settings.email) && hasText(settings.whatsapp);
     const policiesReady = Boolean(settings.policies_updated_at);
@@ -102,14 +111,18 @@ async function refreshReadiness() {
         ? 'Operação limitada à retirada combinada em Macaé.'
         : 'Entrega somente após cotação manual, antes do pagamento.';
 
+    if ($('#metricStock')) $('#metricStock').textContent = String(readyUnits);
+
     render([
       item('Autenticação em duas etapas', mfaReady, mfaReady ? 'Aplicativo autenticador verificado para a conta administrativa.' : 'Ative o aplicativo autenticador em Configurações.', true),
       item('Identificação do vendedor', legalReady, legalReady ? 'Nome legal e CPF/CNPJ preenchidos.' : 'Preencha nome legal e CPF/CNPJ em Configurações.', true),
       item('Endereço legal e canais online', contactReady, contactReady ? 'Endereço de correspondência, e-mail e WhatsApp disponíveis.' : 'Falta endereço legal para correspondência ou canal oficial.', true),
       item('Políticas revisadas', policiesReady, policiesReady ? `Revisadas em ${new Date(`${settings.policies_updated_at}T12:00:00`).toLocaleDateString('pt-BR')}.` : 'Defina a data da última revisão das políticas.', true),
       item('Procedência do fornecedor', Boolean(settings.supplier_docs_verified), settings.supplier_docs_verified ? 'Notas, lotes e procedência marcados como conferidos.' : 'Confirme e arquive documentos do fornecedor.', true),
-      item('Produto disponível para venda', sellable.length > 0, `${sellable.length} de ${active.length} produto(s) ativo(s) têm preço e estoque.`, true),
+      item('Produtos disponíveis para venda', sellable.length > 0, `${sellable.length} de ${active.length} produto(s) ativo(s) podem ser vendidos por pronta entrega ou encomenda.`, true),
+      item('Disponibilidade do fornecedor', preorderProducts.length > 0 && supplierConfirmed.length === preorderProducts.length, `${supplierConfirmed.length} de ${preorderProducts.length} produto(s) sob encomenda têm disponibilidade confirmada na lista.`, true),
       item('Fotos do catálogo', active.length > 0 && activeWithImage.length === active.length, `${activeWithImage.length} de ${active.length} produto(s) ativo(s) têm foto oficial.`, true),
+      item('Estoque de pronta entrega', true, `${readyStockProducts.length} produto(s), somando ${readyUnits} unidade(s), estão marcados para pronta entrega.`),
       item('Custos cadastrados', sellable.length > 0 && sellable.every(product => Number(product.cost) > 0), `${activeWithCost.length} de ${active.length} produto(s) ativo(s) têm custo registrado.`),
       item('Preços cadastrados', active.length > 0 && activeWithPrice.length === active.length, `${activeWithPrice.length} de ${active.length} produto(s) ativo(s) têm preço.`),
       item('Operação de entrega', shippingReady, shippingLabel, true),
