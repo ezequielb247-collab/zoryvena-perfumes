@@ -32,6 +32,19 @@ function ensureProductHeader() {
   row.insertBefore(heading, activeHeading || row.lastElementChild);
 }
 
+function applyProductToCell(cell, product) {
+  if (!cell || !product || cell.dataset.dirty === 'true') return;
+  const checkbox = cell.querySelector('[data-field="preorder_enabled"]');
+  const limit = cell.querySelector('[data-field="preorder_limit"]');
+  const supplier = cell.querySelector('[data-supplier-availability]');
+  if (checkbox) checkbox.checked = Boolean(product.preorder_enabled);
+  if (limit) {
+    limit.value = String(Math.max(1, Number(product.preorder_limit || 1)));
+    limit.disabled = !product.preorder_enabled;
+  }
+  if (supplier) supplier.textContent = product.supplier_availability || 'Disponibilidade do fornecedor não informada';
+}
+
 function preorderCell(productId, product) {
   const cell = createElement('td', { dataset: { preorderCell: productId } });
   const wrapper = createElement('div', { className: 'admin-form' });
@@ -61,13 +74,15 @@ function preorderCell(productId, product) {
   });
   limitLabel.appendChild(limit);
 
-  const supplier = createElement('small', {}, product?.supplier_availability || 'Disponibilidade do fornecedor não informada');
+  const supplier = createElement('small', { dataset: { supplierAvailability: '' } }, product?.supplier_availability || 'Disponibilidade do fornecedor não informada');
   supplier.style.maxWidth = '220px';
 
   checkbox.addEventListener('change', () => {
+    cell.dataset.dirty = 'true';
     limit.disabled = !checkbox.checked;
     if (checkbox.checked && Number(limit.value) < 1) limit.value = '1';
   });
+  limit.addEventListener('input', () => { cell.dataset.dirty = 'true'; });
 
   wrapper.append(checkboxLabel, limitLabel, supplier);
   cell.appendChild(wrapper);
@@ -79,9 +94,15 @@ function enhanceProductTable() {
   document.querySelectorAll('#adminProductsBody tr').forEach(row => {
     const button = row.querySelector('[data-save-product]');
     const productId = String(button?.dataset.saveProduct || '');
-    if (!productId || row.querySelector('[data-preorder-cell]')) return;
+    if (!productId) return;
+    const product = products.get(productId);
+    const existing = row.querySelector('[data-preorder-cell]');
+    if (existing) {
+      applyProductToCell(existing, product);
+      return;
+    }
     const activeCell = row.querySelector('[data-field="active"]')?.closest('td');
-    row.insertBefore(preorderCell(productId, products.get(productId)), activeCell || row.lastElementChild);
+    row.insertBefore(preorderCell(productId, product), activeCell || row.lastElementChild);
   });
 }
 
