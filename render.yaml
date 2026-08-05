@@ -16,7 +16,7 @@ services:
           script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8/ https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://sdk.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           script-src-attr 'none';
           style-src 'self' 'unsafe-inline';
-          img-src 'self' data: blob: https://ajyultndtauabfufrmfr.supabase.co https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
+          img-src 'self' data: blob: https://ajyultndtauabfufrmfr.supabase.co https://images.tcdn.com.br https://orientalaromas.com https://zaoud.it https://media.zid.store https://lattafa-brasil.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           connect-src 'self' https://ajyultndtauabfufrmfr.supabase.co wss://ajyultndtauabfufrmfr.supabase.co https://viacep.com.br https://api.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           frame-src https://*.mercadopago.com https://*.mercadopago.com.br https://*.mercadolibre.com https://*.mercadolivre.com.br https://*.mlstatic.com;
           worker-src 'self' blob:;
