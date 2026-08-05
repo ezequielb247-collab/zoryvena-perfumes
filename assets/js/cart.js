@@ -1,26 +1,40 @@
-import { cartDetails, cartTotal, money, updateCart, removeFromCart, showToast, productUrl } from './store.js';
+import {
+  cartDetails,
+  cartTotal,
+  money,
+  updateCart,
+  removeFromCart,
+  showToast,
+  productUrl,
+  maxPurchasableQuantity,
+  readyStock,
+  preorderCapacity,
+  availabilityText,
+} from './store.js';
 import { media, emptyState, escapeHtml, safeInternalHref } from './components.js';
 
 const list = document.querySelector('#cartList');
 const summary = document.querySelector('#cartSummary');
 
 function quantityControl(item) {
-  const stock = Math.max(1, Number(item.product.stock || 1));
-  const quantity = Math.max(1, Number(item.quantity || 1));
+  const maximum = Math.max(1, maxPurchasableQuantity(item.product));
+  const quantity = Math.max(1, Math.min(maximum, Number(item.quantity || 1)));
   const atMinimum = quantity <= 1;
-  const atMaximum = quantity >= stock;
+  const atMaximum = quantity >= maximum;
   const id = escapeHtml(item.id);
-  const stockMessage = stock === 1
-    ? 'Somente 1 unidade disponível no momento.'
-    : `${stock} unidades disponíveis no momento.`;
+  const stock = readyStock(item.product);
+  const preorder = preorderCapacity(item.product);
+  const helper = stock > 0 && preorder > 0
+    ? `${availabilityText(item.product)}. Limite total neste pedido: ${maximum}.`
+    : availabilityText(item.product);
 
   return `<div class="quantity-block">
     <div class="quantity" aria-label="Controle de quantidade">
       <button class="quantity-button" type="button" data-minus="${id}" ${atMinimum ? 'disabled' : ''} aria-label="Diminuir quantidade">−</button>
-      <input class="quantity-input" data-quantity="${id}" type="number" min="1" max="${stock}" value="${quantity}" inputmode="numeric" aria-label="Quantidade de ${escapeHtml(item.product.name)}">
+      <input class="quantity-input" data-quantity="${id}" type="number" min="1" max="${maximum}" value="${quantity}" inputmode="numeric" aria-label="Quantidade de ${escapeHtml(item.product.name)}">
       <button class="quantity-button" type="button" data-plus="${id}" ${atMaximum ? 'disabled' : ''} aria-label="Aumentar quantidade">+</button>
     </div>
-    <small class="quantity-helper">${escapeHtml(stockMessage)}</small>
+    <small class="quantity-helper">${escapeHtml(helper)}</small>
   </div>`;
 }
 
@@ -44,6 +58,7 @@ function render() {
         <h2><a href="${href}">${escapeHtml(item.product.name)}</a></h2>
         <p>${escapeHtml(item.product.volume)}</p>
         <strong>${escapeHtml(money.format(Number(item.product.price)))}</strong>
+        <small>${escapeHtml(availabilityText(item.product))}</small>
       </div>
       ${quantityControl(item)}
       <button class="remove-link" type="button" data-remove="${id}">Remover</button>
