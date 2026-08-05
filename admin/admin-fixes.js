@@ -1,5 +1,6 @@
 import './mfa-bootstrap.js';
 import './security.js';
+import './preorder.js';
 import { supabase } from '../assets/js/supabase.js';
 import { showToast } from '../assets/js/store.js';
 
@@ -74,14 +75,27 @@ async function saveProductSecurely(button) {
   const productId = String(button.dataset.saveProduct || '');
   if (!/^[a-z0-9-]{1,120}$/i.test(productId)) throw new Error('Identificador de produto inválido.');
 
+  const preorderCheckbox = document.querySelector(`[data-field="preorder_enabled"][data-product="${CSS.escape(productId)}"]`);
+  const preorderLimit = document.querySelector(`[data-field="preorder_limit"][data-product="${CSS.escape(productId)}"]`);
+  if (!preorderCheckbox || !preorderLimit) {
+    throw new Error('Aguarde os controles de encomenda carregarem e tente novamente.');
+  }
+
   const patch = {};
   document.querySelectorAll(`[data-product="${CSS.escape(productId)}"]`).forEach(input => {
     const field = input.dataset.field;
     if (!field) return;
-    if (field === 'active') patch.active = Boolean(input.checked);
+    if (['active', 'preorder_enabled'].includes(field)) patch[field] = Boolean(input.checked);
     else if (field === 'image') patch.image = String(input.value || '').trim() || null;
-    else if (['cost', 'price', 'pix_price', 'stock', 'minimum_stock'].includes(field)) patch[field] = numberOrNull(input.value);
+    else if (['cost', 'price', 'pix_price', 'stock', 'minimum_stock', 'preorder_limit'].includes(field)) {
+      patch[field] = numberOrNull(input.value);
+    }
   });
+
+  if (!patch.preorder_enabled) patch.preorder_limit = 0;
+  else if (!Number.isInteger(patch.preorder_limit) || patch.preorder_limit < 1) {
+    throw new Error('Informe pelo menos 1 unidade como limite de encomenda.');
+  }
 
   const fileInput = document.querySelector(`[data-file-product="${CSS.escape(productId)}"]`);
   let uploadedPath = null;
@@ -95,7 +109,7 @@ async function saveProductSecurely(button) {
       p_patch: patch,
     });
     if (error) throw error;
-    showToast('Produto atualizado por operação administrativa protegida.');
+    showToast('Produto atualizado: pronta entrega e encomenda sincronizadas.');
   } catch (error) {
     if (uploadedPath) {
       try { await supabase.storage.from(PRODUCT_BUCKET).remove([uploadedPath]); } catch { /* limpeza posterior */ }
