@@ -7,6 +7,7 @@ import {
   pixPriceText,
   availabilityText,
   productWhatsapp,
+  productImage,
   getProducts,
   showToast,
   syncStoreData,
@@ -27,9 +28,20 @@ function noteStage(number, title, timing, explanation, notes) {
   </article>`;
 }
 
+function markUnavailablePageNoIndex() {
+  let robots = document.querySelector('meta[name="robots"]');
+  if (!robots) {
+    robots = document.createElement('meta');
+    robots.name = 'robots';
+    document.head.appendChild(robots);
+  }
+  robots.content = 'noindex,follow';
+}
+
 function renderProduct(product) {
   if (!product) {
-    container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
+    markUnavailablePageNoIndex();
+    container.innerHTML = '<div class="empty-state"><h1>Perfume não encontrado</h1><p>Este perfume não faz parte do catálogo disponível no momento.</p><a class="button button-dark" href="/catalogo.html">Voltar ao catálogo</a></div>';
     return;
   }
 
@@ -40,10 +52,11 @@ function renderProduct(product) {
   const pix = pixPriceText(product);
   const safeId = escapeHtml(product.id);
   const consultationUrl = escapeHtml(productWhatsapp(product));
+  const hasImage = Boolean(productImage(product));
 
   document.title = `${String(product.name || '').slice(0, 80)} ${String(product.brand || '').slice(0, 80)} | Zoryvena Perfumes`;
   container.innerHTML = `<div class="product-detail-grid">
-    <section class="product-gallery">${media(product, 'large')}<p class="image-note">A imagem oficial será adicionada após autorização do fornecedor.</p></section>
+    <section class="product-gallery">${media(product, 'large')}${hasImage ? '' : '<p class="image-note">A imagem oficial será adicionada após autorização do fornecedor.</p>'}</section>
     <section class="product-detail-copy">
       <span class="eyebrow">${escapeHtml(product.brand)} · ${escapeHtml(product.gender)}</span>
       <h1>${escapeHtml(product.name)}</h1><p class="lead">${escapeHtml(product.description)}</p>
