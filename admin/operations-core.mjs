@@ -60,6 +60,8 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
     separatingOrders,
     pickupReadyOrders,
     paymentEnvironment: settings?.payment_environment || 'test',
+    paymentProductionCredentialsVerified: Boolean(settings?.payment_production_credentials_verified_at),
+    paymentWebhookVerified: Boolean(settings?.payment_webhook_verified_at),
     supplierDocsVerified: Boolean(settings?.supplier_docs_verified),
     supplierDocsExceptionAcknowledged: Boolean(settings?.supplier_docs_unavailable_acknowledged_at),
     launchStatus: settings?.launch_status || 'preparation',
@@ -71,6 +73,8 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
 export function launchGuardState({
   storedSupplierDocsVerified = false,
   supplierDocsExceptionAcknowledged = false,
+  productionCredentialsVerified = false,
+  productionWebhookVerified = false,
   selectedSupplierDocsVerified = false,
   selectedPaymentEnvironment = 'test',
   storedLaunchStatus = 'preparation',
@@ -78,9 +82,10 @@ export function launchGuardState({
   const storedSupplierVerified = Boolean(storedSupplierDocsVerified);
   const supplierVerified = storedSupplierVerified && Boolean(selectedSupplierDocsVerified);
   const supplierRequirementMet = supplierVerified || Boolean(supplierDocsExceptionAcknowledged);
+  const paymentReadinessMet = Boolean(productionCredentialsVerified) && Boolean(productionWebhookVerified);
   const paymentProduction = selectedPaymentEnvironment === 'production';
-  const canSelectProduction = supplierRequirementMet;
-  const canSelectSoftLaunch = supplierRequirementMet && paymentProduction;
+  const canSelectProduction = supplierRequirementMet && paymentReadinessMet;
+  const canSelectSoftLaunch = canSelectProduction && paymentProduction;
   const canSelectLive = canSelectSoftLaunch && ['soft_launch', 'live'].includes(storedLaunchStatus);
 
   return {
@@ -88,6 +93,9 @@ export function launchGuardState({
     supplierVerified,
     supplierDocsExceptionAcknowledged: Boolean(supplierDocsExceptionAcknowledged),
     supplierRequirementMet,
+    productionCredentialsVerified: Boolean(productionCredentialsVerified),
+    productionWebhookVerified: Boolean(productionWebhookVerified),
+    paymentReadinessMet,
     canSelectProduction,
     canSelectSoftLaunch,
     canSelectLive,
