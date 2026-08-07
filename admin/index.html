@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/assets/css/premium.css">
   <link rel="stylesheet" href="/assets/css/admin.css?v=20260802-2">
   <link rel="stylesheet" href="/assets/css/admin-readiness.css?v=20260802-1">
+  <link rel="stylesheet" href="/assets/css/admin-operations.css?v=20260807-1">
 </head>
 <body class="admin-body">
   <section class="admin-login" id="adminLogin">
@@ -145,7 +146,7 @@
         <article class="order-detail-card"><h3>Pagamento</h3><div class="detail-list" id="modalPaymentDetails"></div></article>
         <article class="order-detail-card full"><h3>Entrega</h3><div class="detail-list" id="modalDeliveryDetails"></div></article>
         <article class="order-detail-card full"><h3>Itens do pedido</h3><div class="order-items-list" id="modalOrderItems"></div></article>
-        <article class="order-detail-card full"><h3>Observação do cliente</h3><p id="modalCustomerNotes">Nenhuma observação.</p></article>
+        <article class="order-detail-card full"><h3>Observação do cliente</h3><p id="modalCustomerNotes">Nenhuma observação do cliente.</p></article>
         <article class="order-detail-card full"><h3>Gestão interna</h3><div class="order-admin-controls"><label>Andamento do pedido<select id="modalFulfillmentSelect"><option>Aguardando pagamento</option><option>Novo pedido</option><option>Em separação</option><option>Pronto para retirada</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></label><label>Observações internas<textarea id="modalAdminNotes" placeholder="Ex.: cliente pediu embalagem para presente, retirada combinada para sábado..."></textarea></label></div><div class="admin-modal-footer"><button class="admin-action danger" id="toggleOrderArchive" type="button">Arquivar pedido</button><button class="admin-action primary" id="saveOrderManagement" type="button">Salvar andamento</button></div></article>
       </div>
     </div>
@@ -155,5 +156,6 @@
   <script type="module" src="/admin/admin.js?v=20260802-2"></script>
   <script type="module" src="/admin/admin-fixes.js?v=20260802-1"></script>
   <script type="module" src="/admin/launch-readiness.js?v=20260802-1"></script>
+  <script type="module" src="/admin/operations.js?v=20260807-1"></script>
 </body>
 </html>
