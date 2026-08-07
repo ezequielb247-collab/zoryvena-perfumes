@@ -100,6 +100,10 @@ async function refreshReadiness() {
     const activeWithImage = active.filter(product => hasText(product.image));
     const activeWithCost = active.filter(product => Number(product.cost) > 0);
     const supplierConfirmed = preorderProducts.filter(product => product.supplier_availability === 'Disponível no fornecedor');
+    const supplierAvailabilityReady = preorderProducts.length === 0 || supplierConfirmed.length === preorderProducts.length;
+    const supplierAvailabilityLabel = preorderProducts.length === 0
+      ? 'Venda sob encomenda está desativada; o soft launch usa somente estoque de pronta entrega.'
+      : `${supplierConfirmed.length} de ${preorderProducts.length} produto(s) sob encomenda têm disponibilidade confirmada na lista.`;
     const readyUnits = active.reduce((sum, product) => sum + Math.max(0, Number(product.stock || 0)), 0);
     const legalReady = hasText(settings.legal_name) && hasText(settings.tax_id);
     const contactReady = hasText(settings.business_address) && hasText(settings.email) && hasText(settings.whatsapp);
@@ -120,7 +124,7 @@ async function refreshReadiness() {
       item('Políticas revisadas', policiesReady, policiesReady ? `Revisadas em ${new Date(`${settings.policies_updated_at}T12:00:00`).toLocaleDateString('pt-BR')}.` : 'Defina a data da última revisão das políticas.', true),
       item('Procedência do fornecedor', Boolean(settings.supplier_docs_verified), settings.supplier_docs_verified ? 'Notas, lotes e procedência marcados como conferidos.' : 'Confirme e arquive documentos do fornecedor.', true),
       item('Produtos disponíveis para venda', sellable.length > 0, `${sellable.length} de ${active.length} produto(s) ativo(s) podem ser vendidos por pronta entrega ou encomenda.`, true),
-      item('Disponibilidade do fornecedor', preorderProducts.length > 0 && supplierConfirmed.length === preorderProducts.length, `${supplierConfirmed.length} de ${preorderProducts.length} produto(s) sob encomenda têm disponibilidade confirmada na lista.`, true),
+      item('Disponibilidade do fornecedor', supplierAvailabilityReady, supplierAvailabilityLabel, true),
       item('Fotos do catálogo', active.length > 0 && activeWithImage.length === active.length, `${activeWithImage.length} de ${active.length} produto(s) ativo(s) têm foto oficial.`, true),
       item('Estoque de pronta entrega', true, `${readyStockProducts.length} produto(s), somando ${readyUnits} unidade(s), estão marcados para pronta entrega.`),
       item('Custos cadastrados', sellable.length > 0 && sellable.every(product => Number(product.cost) > 0), `${activeWithCost.length} de ${active.length} produto(s) ativo(s) têm custo registrado.`),
