@@ -100,4 +100,5 @@ document.addEventListener('change', event => {
   render();
 });
 
+window.addEventListener('zoryvena:data', render);
 render();
