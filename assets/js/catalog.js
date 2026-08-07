@@ -1,7 +1,9 @@
-import { getProducts, getFavorites, getCompare, clearCompare, showToast } from './store.js';
+import { getProducts, getFavorites, getCompare, clearCompare, showToast, syncStoreData } from './store.js';
 import { productCard, emptyState } from './components.js';
 
 let all = getProducts();
+let waitingForSync = true;
+let syncFailed = false;
 const grid = document.querySelector('#catalogGrid');
 const form = document.querySelector('#catalogFilters');
 const resultCount = document.querySelector('#resultCount');
@@ -33,6 +35,10 @@ function refreshFilterOptions() {
   fillSelect('#brandFilter', unique('brand'));
   fillSelect('#familyFilter', unique('family'));
   fillSelect('#climateFilter', unique('climate'));
+}
+
+function systemState(title, text, retry = false) {
+  return `<div class="empty-state"><span>◇</span><h2>${title}</h2><p>${text}</p>${retry ? '<button class="button button-dark" type="button" data-retry-catalog>Tentar novamente</button>' : ''}</div>`;
 }
 
 refreshFilterOptions();
@@ -68,7 +74,28 @@ function render() {
   else if (sort === 'new') products.sort((a, b) => b.rank - a.rank);
   else products.sort((a, b) => a.rank - b.rank);
 
-  resultCount.textContent = `${products.length} ${products.length === 1 ? 'perfume encontrado' : 'perfumes encontrados'}`;
+  if (!all.length && waitingForSync) {
+    resultCount.textContent = 'Atualizando catálogo…';
+    grid.innerHTML = systemState('Carregando catálogo', 'Consultando preços e disponibilidade atualizados.');
+    updateCompareTray();
+    return;
+  }
+
+  if (!all.length && syncFailed) {
+    resultCount.textContent = 'Catálogo temporariamente indisponível';
+    grid.innerHTML = systemState(
+      'Não foi possível atualizar o catálogo',
+      'A loja não exibirá produtos antigos enquanto não conseguir confirmar preços e estoque no servidor.',
+      true
+    );
+    updateCompareTray();
+    return;
+  }
+
+  const countText = `${products.length} ${products.length === 1 ? 'perfume encontrado' : 'perfumes encontrados'}`;
+  resultCount.textContent = syncFailed && all.length
+    ? `${countText} · usando a última versão salva`
+    : countText;
   grid.innerHTML = products.length
     ? products.map(product => productCard(product)).join('')
     : emptyState('Nenhum perfume encontrado', 'Altere os filtros ou faça uma nova busca.');
@@ -90,8 +117,28 @@ document.querySelector('#clearCompare').addEventListener('click', () => {
   updateCompareTray();
   showToast('Comparação limpa.');
 });
+
+document.addEventListener('click', async event => {
+  const retry = event.target.closest('[data-retry-catalog]');
+  if (!retry) return;
+  retry.disabled = true;
+  waitingForSync = true;
+  syncFailed = false;
+  render();
+  await syncStoreData();
+});
+
 window.addEventListener('zoryvena:state', updateCompareTray);
 window.addEventListener('zoryvena:data', () => {
+  waitingForSync = false;
+  syncFailed = false;
+  all = getProducts();
+  refreshFilterOptions();
+  render();
+});
+window.addEventListener('zoryvena:data-error', () => {
+  waitingForSync = false;
+  syncFailed = true;
   all = getProducts();
   refreshFilterOptions();
   render();
