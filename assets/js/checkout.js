@@ -8,6 +8,11 @@ import {
   whatsappUrl,
   getConfig,
 } from './store.js';
+import {
+  normalizeDelivery,
+  normalizePayment,
+  shouldRequestShippingQuote,
+} from './checkout-routing.mjs';
 
 const form = document.querySelector('#checkoutForm');
 const empty = document.querySelector('#checkoutEmpty');
@@ -231,7 +236,7 @@ function bindForm() {
 }
 
 function shippingQuoteMessage(data) {
-  const method = paymentMethod();
+  const method = normalizePayment(data.payment) || paymentMethod();
   const lines = items.map(item => {
     const unit = productPriceForPayment(item.product, method);
     return `• ${item.quantity}x ${String(item.product.brand || '').slice(0, 100)} ${String(item.product.name || '').slice(0, 120)} — ${money.format(unit * item.quantity)}`;
@@ -274,26 +279,38 @@ form?.addEventListener('submit', async event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
 
+  const submittedForm = new FormData(form);
+  const submittedDelivery = normalizeDelivery(submittedForm.get('delivery'));
+  const submittedPayment = normalizePayment(submittedForm.get('payment'));
+  if (!submittedDelivery) {
+    showToast('Escolha entre receber no endereço ou retirar em Macaé.');
+    return;
+  }
+  if (!submittedPayment) {
+    showToast('Escolha Pix ou cartão para continuar.');
+    return;
+  }
+
   const button = form.querySelector('button[type="submit"]');
   const original = button?.textContent;
   if (button) {
     button.disabled = true;
-    button.textContent = deliveryMethod() === 'shipping'
+    button.textContent = shouldRequestShippingQuote(submittedDelivery)
       ? 'Abrindo cotação…'
-      : paymentMethod() === 'pix'
+      : submittedPayment === 'pix'
         ? 'Gerando QR Code…'
         : 'Preparando cartão…';
   }
 
   try {
-    const data = Object.fromEntries(new FormData(form));
-    data.delivery = deliveryMethod();
-    data.payment = paymentMethod();
+    const data = Object.fromEntries(submittedForm);
+    data.delivery = submittedDelivery;
+    data.payment = submittedPayment;
     data.deliveryLabel = data.delivery === 'pickup' ? 'Retirada combinada em Macaé' : 'Entrega com cotação antes do pagamento';
     data.whatsapp = digits(data.whatsapp);
     data.email = String(data.email || '').trim().toLowerCase();
 
-    if (data.delivery === 'shipping') {
+    if (shouldRequestShippingQuote(data.delivery)) {
       data.cep = digits(data.cep);
       data.state = String(data.state || '').toUpperCase();
       data.address = [data.street, data.number, data.complement, data.neighborhood].filter(Boolean).join(', ');
