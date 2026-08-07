@@ -1,4 +1,5 @@
 import { money, saveCart, whatsappUrl, getOrderStatus } from './store.js';
+import { effectivePaymentExpiry, paymentTimeRemaining } from './payment-state.mjs';
 
 const params = new URLSearchParams(location.search);
 const result = params.get('resultado') || params.get('status') || 'pendente';
@@ -114,12 +115,14 @@ function renderQrCode(pix) {
 }
 
 function startCountdown(orderData) {
-  const seconds = Math.min(3600, Math.max(60, Number(orderData?.pix?.expiresInSeconds || 1800)));
-  const createdAt = Number(orderData?.createdAt || Date.now());
-  const expiresAt = createdAt + seconds * 1000;
+  const expiresAt = effectivePaymentExpiry({
+    createdAt: orderData?.createdAt,
+    pixExpiresInSeconds: orderData?.pix?.expiresInSeconds,
+    reservationExpiresAt: orderData?.reservationExpiresAt,
+  });
 
   const update = () => {
-    const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    const remaining = paymentTimeRemaining(expiresAt);
     const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
     const secs = String(remaining % 60).padStart(2, '0');
     if (pixCountdown) pixCountdown.textContent = `${minutes}:${secs}`;
@@ -130,9 +133,14 @@ function startCountdown(orderData) {
         pixCountdown.classList.add('expired');
       }
       if (copyPix) copyPix.disabled = true;
-      if (pixCopyFeedback) pixCopyFeedback.textContent = 'Este código expirou. Volte ao checkout para gerar um novo Pix.';
+      if (pixCopyFeedback) pixCopyFeedback.textContent = 'Este código ou a reserva expirou. Seu carrinho foi mantido para você gerar um novo pedido.';
+      if (primary) {
+        primary.textContent = 'Gerar novo pedido';
+        primary.href = '/checkout.html';
+      }
       if (countdownTimer) clearInterval(countdownTimer);
       countdownTimer = null;
+      checkOrderStatus();
     }
   };
 
@@ -194,7 +202,7 @@ function renderTerminalStatus(statusData) {
   title.hidden = false;
   eyebrow.textContent = 'Pagamento não concluído';
   title.textContent = String(statusData.status || 'Pagamento não aprovado').slice(0, 80);
-  message.textContent = 'O pagamento não foi confirmado. Você pode voltar ao checkout e gerar uma nova cobrança.';
+  message.textContent = 'O pagamento não foi confirmado. Seu carrinho foi mantido para você gerar uma nova cobrança.';
   primary.textContent = 'Tentar novamente';
   primary.href = '/checkout.html';
   minimizeStoredOrder(statusData.status || 'Pagamento não concluído');
@@ -234,7 +242,6 @@ function startStatusMonitoring() {
 }
 
 if (isPix) {
-  saveCart([]);
   const pix = lastOrder.pix;
   const chargedAmount = Number(pix.chargedAmount || lastOrder.total || 0);
   const actualOrderTotal = Number(pix.actualOrderTotal || lastOrder.total || 0);
@@ -271,10 +278,9 @@ if (isPix) {
   primary.href = '/checkout.html';
   minimizeStoredOrder('Pagamento não concluído');
 } else {
-  saveCart([]);
   eyebrow.textContent = 'Pagamento pendente';
   title.textContent = 'O Mercado Pago está processando o pagamento';
-  message.textContent = 'O pedido foi registrado e o status será atualizado automaticamente quando houver uma confirmação.';
+  message.textContent = 'O pedido foi registrado e o status será atualizado automaticamente quando houver uma confirmação. Seu carrinho só será limpo após a aprovação.';
   primary.textContent = 'Voltar ao catálogo';
   primary.href = '/catalogo.html';
   startStatusMonitoring();
