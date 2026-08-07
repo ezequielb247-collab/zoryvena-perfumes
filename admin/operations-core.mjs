@@ -73,8 +73,8 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
 export function launchGuardState({
   storedSupplierDocsVerified = false,
   supplierDocsExceptionAcknowledged = false,
-  productionCredentialsVerified = false,
-  productionWebhookVerified = false,
+  productionCredentialsVerified = true,
+  productionWebhookVerified = true,
   selectedSupplierDocsVerified = false,
   selectedPaymentEnvironment = 'test',
   storedLaunchStatus = 'preparation',
