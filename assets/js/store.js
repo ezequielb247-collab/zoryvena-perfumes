@@ -4,7 +4,15 @@ import { supabase, mapProductRow, mapSettingsRow } from './supabase.js';
 
 const REMOTE_PRODUCTS_KEY = 'zoryvena.remote-products.v1';
 const REMOTE_CONFIG_KEY = 'zoryvena.remote-config.v1';
-const ALLOWED_IMAGE_HOSTS = new Set([location.host, 'ajyultndtauabfufrmfr.supabase.co']);
+const ALLOWED_IMAGE_HOSTS = new Set([
+  location.host,
+  'ajyultndtauabfufrmfr.supabase.co',
+  'images.tcdn.com.br',
+  'orientalaromas.com',
+  'zaoud.it',
+  'media.zid.store',
+  'lattafa-brasil.com',
+]);
 
 export const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
