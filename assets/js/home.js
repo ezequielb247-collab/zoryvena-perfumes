@@ -21,7 +21,7 @@ function applyOriginCopy() {
   if (originDetail) {
     originDetail.textContent = verified
       ? 'Conferência de fornecedor, lote e procedência antes da venda.'
-      : 'A venda real só é liberada após a conferência de fornecedor, lote e procedência.';
+      : 'A loja não anuncia procedência documental comprovada enquanto essa documentação não estiver disponível.';
   }
 
   const originFaq = [...document.querySelectorAll('.faq details')]
@@ -30,7 +30,7 @@ function applyOriginCopy() {
   if (originAnswer) {
     originAnswer.textContent = verified
       ? 'A Zoryvena seleciona produtos com procedência verificada e mantém controle interno de fornecedor, lote e origem.'
-      : 'A Zoryvena só libera vendas reais após conferir fornecedor, lote e procedência de cada produto.';
+      : 'A Zoryvena ainda não possui documentação suficiente do fornecedor para afirmar procedência documental comprovada. Por isso, não usamos essa promessa no site e controlamos cada item pelo catálogo e estoque interno.';
   }
 }
 
