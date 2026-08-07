@@ -21,6 +21,15 @@ function applyVirtualStoreLanguage() {
   });
 }
 
+function applyOperationalTerms() {
+  const inventoryHeading = [...document.querySelectorAll('.legal-document h2')]
+    .find(heading => heading.textContent?.trim().startsWith('3. Preço, estoque e formação do pedido'));
+  const inventoryParagraph = inventoryHeading?.nextElementSibling;
+  if (inventoryParagraph?.tagName === 'P') {
+    inventoryParagraph.textContent = 'Os preços válidos são os exibidos no momento da conclusão do pedido. O sistema confere novamente preço e estoque no servidor antes de criar a cobrança. Quando o pedido para pagamento é criado, as unidades elegíveis ficam reservadas por prazo limitado; a venda só é confirmada após a aprovação do pagamento. Se a reserva expirar ou a cobrança falhar, o estoque é liberado conforme as regras do sistema.';
+  }
+}
+
 function renderLegalData() {
   const config = getConfig();
   const fields = {
@@ -54,6 +63,7 @@ function renderLegalData() {
   });
 
   applyVirtualStoreLanguage();
+  applyOperationalTerms();
 }
 
 renderLegalData();
