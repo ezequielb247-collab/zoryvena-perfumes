@@ -24,7 +24,12 @@ const orders = [
   { id: 'archived', status: 'Aguardando pagamento', fulfillment_status: 'Aguardando pagamento', archived_at: '2026-08-07T00:00:00Z' },
 ];
 const summary = operationalSummary(products, orders, {
-  payment_environment: 'test', supplier_docs_verified: false, launch_status: 'preparation', email_notifications_enabled: false, shipping_mode: 'manual_quote',
+  payment_environment: 'test',
+  supplier_docs_verified: false,
+  supplier_docs_unavailable_acknowledged_at: '2026-08-07T14:15:07Z',
+  launch_status: 'preparation',
+  email_notifications_enabled: false,
+  shipping_mode: 'manual_quote',
 });
 
 assert.equal(summary.activeProducts, 3);
@@ -39,57 +44,63 @@ assert.equal(summary.separatingOrders.length, 1);
 assert.equal(summary.pickupReadyOrders.length, 1);
 assert.equal(summary.paymentEnvironment, 'test');
 assert.equal(summary.supplierDocsVerified, false);
+assert.equal(summary.supplierDocsExceptionAcknowledged, true);
 
 assert.deepEqual(launchGuardState({
   storedSupplierDocsVerified: false,
+  supplierDocsExceptionAcknowledged: false,
   selectedSupplierDocsVerified: true,
   selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'preparation',
 }), {
   canSelectSupplierVerified: false,
   supplierVerified: false,
+  supplierDocsExceptionAcknowledged: false,
+  supplierRequirementMet: false,
   canSelectProduction: false,
   canSelectSoftLaunch: false,
   canSelectLive: false,
 });
 
 assert.deepEqual(launchGuardState({
+  storedSupplierDocsVerified: false,
+  supplierDocsExceptionAcknowledged: true,
+  selectedSupplierDocsVerified: false,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'preparation',
+}), {
+  canSelectSupplierVerified: false,
+  supplierVerified: false,
+  supplierDocsExceptionAcknowledged: true,
+  supplierRequirementMet: true,
+  canSelectProduction: true,
+  canSelectSoftLaunch: true,
+  canSelectLive: false,
+});
+
+assert.deepEqual(launchGuardState({
   storedSupplierDocsVerified: true,
+  supplierDocsExceptionAcknowledged: false,
   selectedSupplierDocsVerified: true,
   selectedPaymentEnvironment: 'test',
   storedLaunchStatus: 'preparation',
 }), {
   canSelectSupplierVerified: true,
   supplierVerified: true,
+  supplierDocsExceptionAcknowledged: false,
+  supplierRequirementMet: true,
   canSelectProduction: true,
   canSelectSoftLaunch: false,
   canSelectLive: false,
 });
 
 assert.equal(launchGuardState({
-  storedSupplierDocsVerified: true,
-  selectedSupplierDocsVerified: true,
-  selectedPaymentEnvironment: 'production',
-  storedLaunchStatus: 'preparation',
-}).canSelectSoftLaunch, true);
-assert.equal(launchGuardState({
-  storedSupplierDocsVerified: true,
-  selectedSupplierDocsVerified: true,
-  selectedPaymentEnvironment: 'production',
-  storedLaunchStatus: 'preparation',
-}).canSelectLive, false);
-assert.equal(launchGuardState({
-  storedSupplierDocsVerified: true,
-  selectedSupplierDocsVerified: true,
-  selectedPaymentEnvironment: 'production',
-  storedLaunchStatus: 'soft_launch',
-}).canSelectLive, true);
-assert.equal(launchGuardState({
-  storedSupplierDocsVerified: true,
+  storedSupplierDocsVerified: false,
+  supplierDocsExceptionAcknowledged: true,
   selectedSupplierDocsVerified: false,
   selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'soft_launch',
-}).canSelectProduction, false);
+}).canSelectLive, true);
 
 assert.equal(auditEntryLabel({ entity_type: 'products', action: 'UPDATE' }), 'Produto atualizado');
 assert.equal(auditEntryLabel({ entity_type: 'orders', action: 'INSERT' }), 'Pedido criado');

@@ -55,7 +55,7 @@ function render(items) {
   summary.textContent = blockers.length
     ? `Não abra pagamentos reais ainda. Resolva primeiro: ${blockers.map(entry => entry.label).join(', ')}.`
     : warnings.length
-      ? `Os bloqueadores principais foram resolvidos. Ainda há ${warnings.length} melhoria(s) recomendada(s).`
+      ? `Os bloqueadores principais foram resolvidos. Ainda há ${warnings.length} melhoria(s) ou ressalva(s) registrada(s).`
       : 'Checklist concluído. Faça uma compra real de baixo valor antes de divulgar a loja.';
 }
 
@@ -108,6 +108,8 @@ async function refreshReadiness() {
     const legalReady = hasText(settings.legal_name) && hasText(settings.tax_id);
     const contactReady = hasText(settings.business_address) && hasText(settings.email) && hasText(settings.whatsapp);
     const policiesReady = Boolean(settings.policies_updated_at);
+    const supplierDocsVerified = Boolean(settings.supplier_docs_verified);
+    const supplierDocsException = Boolean(settings.supplier_docs_unavailable_acknowledged_at);
     const shippingReady = ['pickup_only', 'manual_quote', 'automatic'].includes(settings.shipping_mode);
     const shippingLabel = settings.shipping_mode === 'automatic'
       ? 'Frete automático integrado.'
@@ -122,7 +124,16 @@ async function refreshReadiness() {
       item('Identificação do vendedor', legalReady, legalReady ? 'Nome legal e CPF/CNPJ preenchidos.' : 'Preencha nome legal e CPF/CNPJ em Configurações.', true),
       item('Endereço legal e canais online', contactReady, contactReady ? 'Endereço de correspondência, e-mail e WhatsApp disponíveis.' : 'Falta endereço legal para correspondência ou canal oficial.', true),
       item('Políticas revisadas', policiesReady, policiesReady ? `Revisadas em ${new Date(`${settings.policies_updated_at}T12:00:00`).toLocaleDateString('pt-BR')}.` : 'Defina a data da última revisão das políticas.', true),
-      item('Procedência do fornecedor', Boolean(settings.supplier_docs_verified), settings.supplier_docs_verified ? 'Notas, lotes e procedência marcados como conferidos.' : 'Confirme e arquive documentos do fornecedor.', true),
+      item(
+        'Procedência do fornecedor',
+        supplierDocsVerified,
+        supplierDocsVerified
+          ? 'Notas, lotes e procedência marcados como conferidos.'
+          : supplierDocsException
+            ? 'Documentação indisponível; exceção operacional registrada. Não anunciar procedência documental comprovada.'
+            : 'Ainda não há documentos nem exceção operacional registrada.',
+        !supplierDocsException,
+      ),
       item('Produtos disponíveis para venda', sellable.length > 0, `${sellable.length} de ${active.length} produto(s) ativo(s) podem ser vendidos por pronta entrega ou encomenda.`, true),
       item('Disponibilidade do fornecedor', supplierAvailabilityReady, supplierAvailabilityLabel, true),
       item('Fotos do catálogo', active.length > 0 && activeWithImage.length === active.length, `${activeWithImage.length} de ${active.length} produto(s) ativo(s) têm foto oficial.`, true),
