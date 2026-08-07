@@ -1,5 +1,5 @@
 import { supabase } from '../assets/js/supabase.js';
-import { operationalSummary, productOperationalRisks, auditEntryLabel } from './operations-core.mjs';
+import { operationalSummary, productOperationalRisks, auditEntryLabel, launchGuardState } from './operations-core.mjs';
 
 const panel = document.querySelector('#adminPanel');
 const dashboard = document.querySelector('#dashboardView');
@@ -257,23 +257,58 @@ function applySettingsGuard() {
   const form = document.querySelector('#settingsForm');
   const guard = document.querySelector('#settingsLaunchGuard');
   if (!form || !guard) return;
+  if (!lastSummary) {
+    guard.textContent = 'Carregando travas de lançamento confirmadas pelo servidor…';
+    return;
+  }
+
   const supplierSelect = form.elements.supplier_docs_verified;
   const paymentSelect = form.elements.payment_environment;
   const launchSelect = form.elements.launch_status;
-  const supplierVerified = supplierSelect?.value === 'true' || lastSummary?.supplierDocsVerified === true;
-  const paymentProduction = paymentSelect?.value === 'production' || lastSummary?.paymentEnvironment === 'production';
+  const storedSupplierVerified = lastSummary.supplierDocsVerified === true;
 
-  const productionOption = paymentSelect?.querySelector('option[value="production"]');
-  if (productionOption) productionOption.disabled = !supplierVerified;
-  launchSelect?.querySelectorAll('option').forEach(option => {
-    if (['soft_launch', 'live'].includes(option.value)) option.disabled = !(supplierVerified && paymentProduction);
+  const supplierVerifiedOption = supplierSelect?.querySelector('option[value="true"]');
+  if (supplierVerifiedOption) supplierVerifiedOption.disabled = !storedSupplierVerified;
+  if (!storedSupplierVerified && supplierSelect?.value === 'true') supplierSelect.value = 'false';
+
+  let state = launchGuardState({
+    storedSupplierDocsVerified: storedSupplierVerified,
+    selectedSupplierDocsVerified: supplierSelect?.value === 'true',
+    selectedPaymentEnvironment: paymentSelect?.value || 'test',
+    storedLaunchStatus: lastSummary.launchStatus,
   });
 
+  const productionOption = paymentSelect?.querySelector('option[value="production"]');
+  if (productionOption) productionOption.disabled = !state.canSelectProduction;
+  if (!state.canSelectProduction && paymentSelect?.value === 'production') paymentSelect.value = 'test';
+
+  state = launchGuardState({
+    storedSupplierDocsVerified: storedSupplierVerified,
+    selectedSupplierDocsVerified: supplierSelect?.value === 'true',
+    selectedPaymentEnvironment: paymentSelect?.value || 'test',
+    storedLaunchStatus: lastSummary.launchStatus,
+  });
+
+  const softLaunchOption = launchSelect?.querySelector('option[value="soft_launch"]');
+  const liveOption = launchSelect?.querySelector('option[value="live"]');
+  if (softLaunchOption) softLaunchOption.disabled = !state.canSelectSoftLaunch;
+  if (liveOption) liveOption.disabled = !state.canSelectLive;
+  if (launchSelect?.value === 'soft_launch' && !state.canSelectSoftLaunch) launchSelect.value = 'preparation';
+  if (launchSelect?.value === 'live' && !state.canSelectLive) launchSelect.value = lastSummary.launchStatus === 'soft_launch' ? 'soft_launch' : 'preparation';
+
   const notes = [];
-  if (!supplierVerified) notes.push('Procedência ainda não comprovada: mantenha “Ainda não conferidas”. O ambiente de produção fica desabilitado nesta tela.');
-  else if (!paymentProduction) notes.push('Procedência marcada como conferida. O próximo bloqueio é validar o Mercado Pago em produção.');
-  else notes.push('Procedência e produção marcadas como prontas. Antes de abrir a loja, faça um pedido real controlado de baixo valor.');
-  notes.push('Esta interface é uma proteção adicional; as funções do servidor continuam validando as travas críticas.');
+  if (!storedSupplierVerified) {
+    notes.push('Procedência ainda não comprovada. A opção “Conferidas e arquivadas” fica bloqueada: a confirmação só poderá ocorrer por um fluxo específico após análise documental real.');
+  } else if (supplierSelect?.value !== 'true') {
+    notes.push('A procedência foi desmarcada nesta edição; produção e lançamento ficam bloqueados enquanto ela permanecer revogada.');
+  } else if (paymentSelect?.value !== 'production') {
+    notes.push('Procedência confirmada no servidor. O próximo bloqueio é validar o Mercado Pago em produção.');
+  } else if (lastSummary.launchStatus === 'preparation') {
+    notes.push('Produção e procedência estão confirmadas. O próximo passo permitido é lançamento controlado; “Loja oficialmente aberta” continua bloqueado até passar pelo soft launch.');
+  } else {
+    notes.push('Travas principais confirmadas. Antes de ampliar a operação, execute e revise o teste real controlado de ponta a ponta.');
+  }
+  notes.push('O servidor valida essas dependências novamente; alterar o HTML ou usar DevTools não contorna as travas.');
   guard.replaceChildren(...notes.map(text => el('p', '', text)));
 }
 

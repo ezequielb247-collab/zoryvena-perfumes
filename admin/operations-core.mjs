@@ -67,6 +67,28 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
   };
 }
 
+export function launchGuardState({
+  storedSupplierDocsVerified = false,
+  selectedSupplierDocsVerified = false,
+  selectedPaymentEnvironment = 'test',
+  storedLaunchStatus = 'preparation',
+} = {}) {
+  const storedSupplierVerified = Boolean(storedSupplierDocsVerified);
+  const supplierVerified = storedSupplierVerified && Boolean(selectedSupplierDocsVerified);
+  const paymentProduction = selectedPaymentEnvironment === 'production';
+  const canSelectProduction = supplierVerified;
+  const canSelectSoftLaunch = supplierVerified && paymentProduction;
+  const canSelectLive = canSelectSoftLaunch && ['soft_launch', 'live'].includes(storedLaunchStatus);
+
+  return {
+    canSelectSupplierVerified: storedSupplierVerified,
+    supplierVerified,
+    canSelectProduction,
+    canSelectSoftLaunch,
+    canSelectLive,
+  };
+}
+
 export function auditEntryLabel(entry = {}) {
   const entity = {
     products: 'Produto',
