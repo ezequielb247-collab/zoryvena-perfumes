@@ -89,7 +89,11 @@ function setText(selector, value) {
 
 function safetyMessages(summary) {
   const messages = [];
-  if (!summary.supplierDocsVerified) messages.push({ type: 'blocker', text: 'Procedência do fornecedor ainda não comprovada: produção e lançamento continuam bloqueados.' });
+  if (!summary.supplierDocsVerified && summary.supplierDocsExceptionAcknowledged) {
+    messages.push({ type: 'info', text: 'Documentação do fornecedor indisponível: exceção operacional registrada. Não anuncie procedência documental comprovada.' });
+  } else if (!summary.supplierDocsVerified) {
+    messages.push({ type: 'blocker', text: 'Procedência do fornecedor ainda não comprovada e nenhuma exceção operacional foi registrada.' });
+  }
   if (summary.paymentEnvironment !== 'production') messages.push({ type: 'safe', text: 'Mercado Pago em ambiente de teste: nenhuma cobrança real deve ser liberada.' });
   if (summary.launchStatus === 'preparation') messages.push({ type: 'safe', text: 'Loja em preparação: catálogo pode ser testado sem abertura oficial.' });
   if (!summary.emailNotificationsEnabled) messages.push({ type: 'info', text: 'E-mails automáticos ainda não estão ativos; atendimento e acompanhamento continuam pelo painel/WhatsApp.' });
@@ -157,7 +161,7 @@ async function fetchOperations() {
   const [productsResult, ordersResult, settingsResult, auditResult] = await Promise.all([
     supabase.from('products').select('id,brand,name,active,stock,minimum_stock,cost,price,pix_price,image'),
     supabase.from('orders').select('id,status,fulfillment_status,archived_at'),
-    supabase.from('store_settings').select('payment_environment,supplier_docs_verified,launch_status,email_notifications_enabled,shipping_mode').eq('id', 1).single(),
+    supabase.from('store_settings').select('payment_environment,supplier_docs_verified,supplier_docs_unavailable_acknowledged_at,launch_status,email_notifications_enabled,shipping_mode').eq('id', 1).single(),
     supabase.rpc('admin_get_audit_log', { p_limit: 30 }),
   ]);
 
@@ -266,6 +270,7 @@ function applySettingsGuard() {
   const paymentSelect = form.elements.payment_environment;
   const launchSelect = form.elements.launch_status;
   const storedSupplierVerified = lastSummary.supplierDocsVerified === true;
+  const supplierDocsExceptionAcknowledged = lastSummary.supplierDocsExceptionAcknowledged === true;
 
   const supplierVerifiedOption = supplierSelect?.querySelector('option[value="true"]');
   if (supplierVerifiedOption) supplierVerifiedOption.disabled = !storedSupplierVerified;
@@ -273,6 +278,7 @@ function applySettingsGuard() {
 
   let state = launchGuardState({
     storedSupplierDocsVerified: storedSupplierVerified,
+    supplierDocsExceptionAcknowledged,
     selectedSupplierDocsVerified: supplierSelect?.value === 'true',
     selectedPaymentEnvironment: paymentSelect?.value || 'test',
     storedLaunchStatus: lastSummary.launchStatus,
@@ -284,6 +290,7 @@ function applySettingsGuard() {
 
   state = launchGuardState({
     storedSupplierDocsVerified: storedSupplierVerified,
+    supplierDocsExceptionAcknowledged,
     selectedSupplierDocsVerified: supplierSelect?.value === 'true',
     selectedPaymentEnvironment: paymentSelect?.value || 'test',
     storedLaunchStatus: lastSummary.launchStatus,
@@ -297,17 +304,22 @@ function applySettingsGuard() {
   if (launchSelect?.value === 'live' && !state.canSelectLive) launchSelect.value = lastSummary.launchStatus === 'soft_launch' ? 'soft_launch' : 'preparation';
 
   const notes = [];
-  if (!storedSupplierVerified) {
-    notes.push('Procedência ainda não comprovada. A opção “Conferidas e arquivadas” fica bloqueada: a confirmação só poderá ocorrer por um fluxo específico após análise documental real.');
+  if (!storedSupplierVerified && supplierDocsExceptionAcknowledged) {
+    notes.push('A documentação do fornecedor continua não comprovada e a opção “Conferidas e arquivadas” permanece bloqueada. A exceção operacional por documentos indisponíveis foi registrada e não deve ser apresentada como prova de procedência.');
+  } else if (!storedSupplierVerified) {
+    notes.push('Procedência ainda não comprovada e sem exceção operacional. Produção permanece bloqueada.');
   } else if (supplierSelect?.value !== 'true') {
     notes.push('A procedência foi desmarcada nesta edição; produção e lançamento ficam bloqueados enquanto ela permanecer revogada.');
-  } else if (paymentSelect?.value !== 'production') {
-    notes.push('Procedência confirmada no servidor. O próximo bloqueio é validar o Mercado Pago em produção.');
-  } else if (lastSummary.launchStatus === 'preparation') {
-    notes.push('Produção e procedência estão confirmadas. O próximo passo permitido é lançamento controlado; “Loja oficialmente aberta” continua bloqueado até passar pelo soft launch.');
-  } else {
-    notes.push('Travas principais confirmadas. Antes de ampliar a operação, execute e revise o teste real controlado de ponta a ponta.');
   }
+
+  if (state.supplierRequirementMet && paymentSelect?.value !== 'production') {
+    notes.push('O requisito operacional do fornecedor está registrado. O próximo bloqueio técnico é validar o Mercado Pago em produção.');
+  } else if (state.supplierRequirementMet && paymentSelect?.value === 'production' && lastSummary.launchStatus === 'preparation') {
+    notes.push('Com pagamentos produtivos validados, o próximo passo permitido será o lançamento controlado; “Loja oficialmente aberta” continua bloqueado até passar pelo soft launch.');
+  } else if (state.supplierRequirementMet && paymentSelect?.value === 'production') {
+    notes.push('Travas principais registradas. Antes de ampliar a operação, execute e revise o teste real controlado de ponta a ponta.');
+  }
+
   notes.push('O servidor valida essas dependências novamente; alterar o HTML ou usar DevTools não contorna as travas.');
   guard.replaceChildren(...notes.map(text => el('p', '', text)));
 }
