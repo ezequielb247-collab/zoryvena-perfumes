@@ -1,6 +1,12 @@
-import { BASE_PRODUCTS } from './products.js';
 import { DEFAULT_CONFIG, KEYS } from './config.js';
 import { supabase, mapProductRow, mapSettingsRow } from './supabase.js';
+import {
+  parseCollectionCache,
+  maximumPurchasable,
+  isSellableProduct,
+  reconcileCartItems,
+  reconcileProductIds,
+} from './storefront-safety.mjs';
 
 const REMOTE_PRODUCTS_KEY = 'zoryvena.remote-products.v1';
 const REMOTE_CONFIG_KEY = 'zoryvena.remote-config.v1';
@@ -21,15 +27,45 @@ export function load(key, fallback) {
 }
 export function save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 
+function catalogCache() {
+  return parseCollectionCache(localStorage.getItem(REMOTE_PRODUCTS_KEY));
+}
+
+function differs(a, b) {
+  return JSON.stringify(a) !== JSON.stringify(b);
+}
+
+function reconcileStoredState(products) {
+  const currentCart = load(KEYS.cart, []);
+  const currentFavorites = load(KEYS.favorites, []);
+  const currentCompare = load(KEYS.compare, []);
+  const nextCart = reconcileCartItems(currentCart, products);
+  const nextFavorites = reconcileProductIds(currentFavorites, products);
+  const nextCompare = reconcileProductIds(currentCompare, products, 3);
+  let changed = false;
+
+  if (differs(currentCart, nextCart)) {
+    save(KEYS.cart, nextCart);
+    changed = true;
+  }
+  if (differs(currentFavorites, nextFavorites)) {
+    save(KEYS.favorites, nextFavorites);
+    changed = true;
+  }
+  if (differs(currentCompare, nextCompare)) {
+    save(KEYS.compare, nextCompare);
+    changed = true;
+  }
+  return changed;
+}
+
 export function getConfig() {
   return { ...DEFAULT_CONFIG, ...load(KEYS.settings, {}), ...load(REMOTE_CONFIG_KEY, {}) };
 }
 
 export function getProducts() {
-  const remote = load(REMOTE_PRODUCTS_KEY, null);
-  if (Array.isArray(remote) && remote.length) return remote;
-  const overrides = load(KEYS.productOverrides, {});
-  return BASE_PRODUCTS.map(product => ({ ...product, ...(overrides[product.id] || {}) }));
+  const cache = catalogCache();
+  return cache.present ? cache.values : [];
 }
 
 export async function syncStoreData() {
@@ -43,18 +79,21 @@ export async function syncStoreData() {
 
     const mappedProducts = (products || []).map(mapProductRow);
     const mappedSettings = mapSettingsRow(Array.isArray(settingsRows) ? settingsRows[0] : settingsRows);
-    const previousProducts = JSON.stringify(load(REMOTE_PRODUCTS_KEY, []));
-    const previousSettings = JSON.stringify(load(REMOTE_CONFIG_KEY, {}));
-    const nextProducts = JSON.stringify(mappedProducts);
-    const nextSettings = JSON.stringify(mappedSettings);
+    const previousProducts = getProducts();
+    const previousSettings = load(REMOTE_CONFIG_KEY, {});
 
     save(REMOTE_PRODUCTS_KEY, mappedProducts);
     save(REMOTE_CONFIG_KEY, mappedSettings);
-    const changed = previousProducts !== nextProducts || previousSettings !== nextSettings;
-    window.dispatchEvent(new CustomEvent('zoryvena:data', { detail: { changed } }));
-    return changed;
+
+    const stateChanged = reconcileStoredState(mappedProducts);
+    const changed = differs(previousProducts, mappedProducts) || differs(previousSettings, mappedSettings);
+    if (stateChanged) window.dispatchEvent(new Event('zoryvena:state'));
+    window.dispatchEvent(new CustomEvent('zoryvena:data', { detail: { changed, stateChanged } }));
+    return changed || stateChanged;
   } catch {
+    const hasCache = catalogCache().present;
     console.warn('Não foi possível sincronizar os dados públicos da loja.');
+    window.dispatchEvent(new CustomEvent('zoryvena:data-error', { detail: { hasCache } }));
     return false;
   }
 }
@@ -65,8 +104,8 @@ export function readyStock(product) { return Math.max(0, Math.trunc(Number(produ
 export function preorderCapacity(product) {
   return product?.preorderEnabled ? Math.max(0, Math.trunc(Number(product?.preorderLimit || 0))) : 0;
 }
-export function maxPurchasableQuantity(product) { return readyStock(product) + preorderCapacity(product); }
-export function isAvailable(product) { return isPriced(product) && maxPurchasableQuantity(product) > 0; }
+export function maxPurchasableQuantity(product) { return maximumPurchasable(product); }
+export function isAvailable(product) { return isSellableProduct(product); }
 export function requiresPreorder(product, quantity = 1) {
   return Math.max(1, Number(quantity || 1)) > readyStock(product) && preorderCapacity(product) > 0;
 }
@@ -128,15 +167,16 @@ export function updateCart(id, quantity) {
   const product = getProduct(id);
   const cart = getCart();
   const item = cart.find(entry => entry.id === id);
-  if (!item || !product) return;
+  if (!item || !product || !isAvailable(product)) return;
   const maximum = Math.max(1, maxPurchasableQuantity(product));
   item.quantity = Math.max(1, Math.min(maximum, Number(quantity || 1)));
   saveCart(cart);
 }
 export function removeFromCart(id) { saveCart(getCart().filter(item => item.id !== id)); }
 export function cartDetails() {
+  const products = new Map(getProducts().map(product => [product.id, product]));
   return getCart()
-    .map(item => ({ ...item, product: getProduct(item.id) }))
+    .map(item => ({ ...item, product: products.get(item.id) }))
     .filter(item => item.product && isAvailable(item.product));
 }
 export function productPriceForPayment(product, paymentMethod = 'card') {

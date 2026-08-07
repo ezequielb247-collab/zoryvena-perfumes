@@ -44,7 +44,13 @@ jobs:
           set -euo pipefail
           while IFS= read -r -d '' file; do
             node --input-type=module --check < "$file"
-          done < <(find assets admin -type f -name '*.js' -print0)
+          done < <(find assets admin tests -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+
+      - name: Run storefront regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/storefront-safety.test.mjs
 
       - name: Reject inline JavaScript handlers
         shell: bash
@@ -55,6 +61,7 @@ jobs:
              --exclude-dir=dist \
              --include='*.html' \
              --include='*.js' \
+             --include='*.mjs' \
              '\bon(click|error|load|submit|focus|mouseover|mouseenter|mouseleave|keydown|keyup)\s*=' .; then
             echo 'Inline event handler found. Use addEventListener instead.' >&2
             exit 1
@@ -73,6 +80,8 @@ jobs:
           grep -q "mfa-bootstrap.js" admin/admin-fixes.js
           grep -q "sessionStorage" assets/js/supabase.js
           grep -q "get_storefront_products" assets/js/store.js
+          grep -q "parseCollectionCache" assets/js/store.js
+          grep -q "Run storefront regression tests" .github/workflows/security-checks.yml
 
       - name: Build deployable static site
         shell: bash
@@ -82,6 +91,7 @@ jobs:
           test -f dist/index.html
           test -f dist/admin/index.html
           test -f dist/admin/mfa-bootstrap.js
+          test -f dist/assets/js/storefront-safety.mjs
           test -f dist/checkout.html
           test -f dist/cartao.html
           test -f dist/pagamento.html
