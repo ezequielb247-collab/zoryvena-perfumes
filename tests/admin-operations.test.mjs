@@ -25,6 +25,8 @@ const orders = [
 ];
 const summary = operationalSummary(products, orders, {
   payment_environment: 'test',
+  payment_production_credentials_verified_at: null,
+  payment_webhook_verified_at: null,
   supplier_docs_verified: false,
   supplier_docs_unavailable_acknowledged_at: '2026-08-07T14:15:07Z',
   launch_status: 'preparation',
@@ -43,60 +45,66 @@ assert.equal(summary.newOrders.length, 1);
 assert.equal(summary.separatingOrders.length, 1);
 assert.equal(summary.pickupReadyOrders.length, 1);
 assert.equal(summary.paymentEnvironment, 'test');
+assert.equal(summary.paymentProductionCredentialsVerified, false);
+assert.equal(summary.paymentWebhookVerified, false);
 assert.equal(summary.supplierDocsVerified, false);
 assert.equal(summary.supplierDocsExceptionAcknowledged, true);
 
-assert.deepEqual(launchGuardState({
+const missingEverything = launchGuardState({
   storedSupplierDocsVerified: false,
   supplierDocsExceptionAcknowledged: false,
+  productionCredentialsVerified: false,
+  productionWebhookVerified: false,
   selectedSupplierDocsVerified: true,
   selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'preparation',
-}), {
-  canSelectSupplierVerified: false,
-  supplierVerified: false,
-  supplierDocsExceptionAcknowledged: false,
-  supplierRequirementMet: false,
-  canSelectProduction: false,
-  canSelectSoftLaunch: false,
-  canSelectLive: false,
 });
+assert.equal(missingEverything.supplierRequirementMet, false);
+assert.equal(missingEverything.paymentReadinessMet, false);
+assert.equal(missingEverything.canSelectProduction, false);
 
-assert.deepEqual(launchGuardState({
+const supplierExceptionOnly = launchGuardState({
   storedSupplierDocsVerified: false,
   supplierDocsExceptionAcknowledged: true,
+  productionCredentialsVerified: false,
+  productionWebhookVerified: false,
   selectedSupplierDocsVerified: false,
   selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'preparation',
-}), {
-  canSelectSupplierVerified: false,
-  supplierVerified: false,
-  supplierDocsExceptionAcknowledged: true,
-  supplierRequirementMet: true,
-  canSelectProduction: true,
-  canSelectSoftLaunch: true,
-  canSelectLive: false,
 });
+assert.equal(supplierExceptionOnly.supplierRequirementMet, true);
+assert.equal(supplierExceptionOnly.paymentReadinessMet, false);
+assert.equal(supplierExceptionOnly.canSelectProduction, false);
 
-assert.deepEqual(launchGuardState({
-  storedSupplierDocsVerified: true,
-  supplierDocsExceptionAcknowledged: false,
-  selectedSupplierDocsVerified: true,
-  selectedPaymentEnvironment: 'test',
+const credentialsOnly = launchGuardState({
+  storedSupplierDocsVerified: false,
+  supplierDocsExceptionAcknowledged: true,
+  productionCredentialsVerified: true,
+  productionWebhookVerified: false,
+  selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'preparation',
-}), {
-  canSelectSupplierVerified: true,
-  supplierVerified: true,
-  supplierDocsExceptionAcknowledged: false,
-  supplierRequirementMet: true,
-  canSelectProduction: true,
-  canSelectSoftLaunch: false,
-  canSelectLive: false,
 });
+assert.equal(credentialsOnly.canSelectProduction, false);
+
+const productionReady = launchGuardState({
+  storedSupplierDocsVerified: false,
+  supplierDocsExceptionAcknowledged: true,
+  productionCredentialsVerified: true,
+  productionWebhookVerified: true,
+  selectedSupplierDocsVerified: false,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'preparation',
+});
+assert.equal(productionReady.paymentReadinessMet, true);
+assert.equal(productionReady.canSelectProduction, true);
+assert.equal(productionReady.canSelectSoftLaunch, true);
+assert.equal(productionReady.canSelectLive, false);
 
 assert.equal(launchGuardState({
   storedSupplierDocsVerified: false,
   supplierDocsExceptionAcknowledged: true,
+  productionCredentialsVerified: true,
+  productionWebhookVerified: true,
   selectedSupplierDocsVerified: false,
   selectedPaymentEnvironment: 'production',
   storedLaunchStatus: 'soft_launch',

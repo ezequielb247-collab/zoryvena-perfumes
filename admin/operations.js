@@ -1,5 +1,6 @@
 import { supabase } from '../assets/js/supabase.js';
 import { operationalSummary, productOperationalRisks, auditEntryLabel, launchGuardState } from './operations-core.mjs';
+import './mp-production-readiness.js';
 
 const panel = document.querySelector('#adminPanel');
 const dashboard = document.querySelector('#dashboardView');
