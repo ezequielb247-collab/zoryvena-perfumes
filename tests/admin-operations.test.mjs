@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { grossMarginPercent, productOperationalRisks, operationalSummary, auditEntryLabel } from '../admin/operations-core.mjs';
+import { grossMarginPercent, productOperationalRisks, operationalSummary, auditEntryLabel, launchGuardState } from '../admin/operations-core.mjs';
 
 assert.equal(Math.round(grossMarginPercent(200, 100)), 50);
 assert.equal(grossMarginPercent(0, 100), null);
@@ -39,6 +39,57 @@ assert.equal(summary.separatingOrders.length, 1);
 assert.equal(summary.pickupReadyOrders.length, 1);
 assert.equal(summary.paymentEnvironment, 'test');
 assert.equal(summary.supplierDocsVerified, false);
+
+assert.deepEqual(launchGuardState({
+  storedSupplierDocsVerified: false,
+  selectedSupplierDocsVerified: true,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'preparation',
+}), {
+  canSelectSupplierVerified: false,
+  supplierVerified: false,
+  canSelectProduction: false,
+  canSelectSoftLaunch: false,
+  canSelectLive: false,
+});
+
+assert.deepEqual(launchGuardState({
+  storedSupplierDocsVerified: true,
+  selectedSupplierDocsVerified: true,
+  selectedPaymentEnvironment: 'test',
+  storedLaunchStatus: 'preparation',
+}), {
+  canSelectSupplierVerified: true,
+  supplierVerified: true,
+  canSelectProduction: true,
+  canSelectSoftLaunch: false,
+  canSelectLive: false,
+});
+
+assert.equal(launchGuardState({
+  storedSupplierDocsVerified: true,
+  selectedSupplierDocsVerified: true,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'preparation',
+}).canSelectSoftLaunch, true);
+assert.equal(launchGuardState({
+  storedSupplierDocsVerified: true,
+  selectedSupplierDocsVerified: true,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'preparation',
+}).canSelectLive, false);
+assert.equal(launchGuardState({
+  storedSupplierDocsVerified: true,
+  selectedSupplierDocsVerified: true,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'soft_launch',
+}).canSelectLive, true);
+assert.equal(launchGuardState({
+  storedSupplierDocsVerified: true,
+  selectedSupplierDocsVerified: false,
+  selectedPaymentEnvironment: 'production',
+  storedLaunchStatus: 'soft_launch',
+}).canSelectProduction, false);
 
 assert.equal(auditEntryLabel({ entity_type: 'products', action: 'UPDATE' }), 'Produto atualizado');
 assert.equal(auditEntryLabel({ entity_type: 'orders', action: 'INSERT' }), 'Pedido criado');
