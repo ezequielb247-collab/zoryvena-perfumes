@@ -11,6 +11,7 @@ let products = new Map();
 let orders = new Map();
 let currentOrderId = '';
 let refreshTimer;
+let enhanceFrame = 0;
 
 function createElement(tag, attributes = {}, text = '') {
   const element = document.createElement(tag);
@@ -37,12 +38,16 @@ function applyProductToCell(cell, product) {
   const checkbox = cell.querySelector('[data-field="preorder_enabled"]');
   const limit = cell.querySelector('[data-field="preorder_limit"]');
   const supplier = cell.querySelector('[data-supplier-availability]');
-  if (checkbox) checkbox.checked = Boolean(product.preorder_enabled);
+  const enabled = Boolean(product.preorder_enabled);
+  const limitValue = String(Math.max(1, Number(product.preorder_limit || 1)));
+  const supplierText = product.supplier_availability || 'Disponibilidade do fornecedor não informada';
+
+  if (checkbox && checkbox.checked !== enabled) checkbox.checked = enabled;
   if (limit) {
-    limit.value = String(Math.max(1, Number(product.preorder_limit || 1)));
-    limit.disabled = !product.preorder_enabled;
+    if (limit.value !== limitValue) limit.value = limitValue;
+    if (limit.disabled === enabled) limit.disabled = !enabled;
   }
-  if (supplier) supplier.textContent = product.supplier_availability || 'Disponibilidade do fornecedor não informada';
+  if (supplier && supplier.textContent !== supplierText) supplier.textContent = supplierText;
 }
 
 function preorderCell(productId, product) {
@@ -132,6 +137,14 @@ function enhance() {
   enhanceOrderStatuses();
 }
 
+function scheduleEnhance() {
+  if (enhanceFrame) return;
+  enhanceFrame = window.requestAnimationFrame(() => {
+    enhanceFrame = 0;
+    enhance();
+  });
+}
+
 async function refreshData() {
   clearTimeout(refreshTimer);
   try {
@@ -143,15 +156,18 @@ async function refreshData() {
     if (orderResult.error) throw orderResult.error;
     products = new Map((productResult.data || []).map(product => [String(product.id), product]));
     orders = new Map((orderResult.data || []).map(order => [String(order.id), order]));
-    enhance();
+    scheduleEnhance();
   } catch (error) {
     console.error('preorder panel enhancement failed', error);
     showToast('Não foi possível carregar os controles de encomenda agora.');
   }
 }
 
-const observer = new MutationObserver(() => enhance());
-observer.observe(document.documentElement, { childList: true, subtree: true });
+const observer = new MutationObserver(scheduleEnhance);
+const productBody = document.querySelector('#adminProductsBody');
+const ordersBody = document.querySelector('#adminOrdersBody');
+if (productBody) observer.observe(productBody, { childList: true, subtree: true });
+if (ordersBody) observer.observe(ordersBody, { childList: true, subtree: true });
 
 document.addEventListener('click', event => {
   const detail = event.target.closest('[data-order-detail]');
