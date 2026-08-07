@@ -61,6 +61,7 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
     pickupReadyOrders,
     paymentEnvironment: settings?.payment_environment || 'test',
     supplierDocsVerified: Boolean(settings?.supplier_docs_verified),
+    supplierDocsExceptionAcknowledged: Boolean(settings?.supplier_docs_unavailable_acknowledged_at),
     launchStatus: settings?.launch_status || 'preparation',
     emailNotificationsEnabled: Boolean(settings?.email_notifications_enabled),
     shippingMode: settings?.shipping_mode || 'manual_quote',
@@ -69,20 +70,24 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
 
 export function launchGuardState({
   storedSupplierDocsVerified = false,
+  supplierDocsExceptionAcknowledged = false,
   selectedSupplierDocsVerified = false,
   selectedPaymentEnvironment = 'test',
   storedLaunchStatus = 'preparation',
 } = {}) {
   const storedSupplierVerified = Boolean(storedSupplierDocsVerified);
   const supplierVerified = storedSupplierVerified && Boolean(selectedSupplierDocsVerified);
+  const supplierRequirementMet = supplierVerified || Boolean(supplierDocsExceptionAcknowledged);
   const paymentProduction = selectedPaymentEnvironment === 'production';
-  const canSelectProduction = supplierVerified;
-  const canSelectSoftLaunch = supplierVerified && paymentProduction;
+  const canSelectProduction = supplierRequirementMet;
+  const canSelectSoftLaunch = supplierRequirementMet && paymentProduction;
   const canSelectLive = canSelectSoftLaunch && ['soft_launch', 'live'].includes(storedLaunchStatus);
 
   return {
     canSelectSupplierVerified: storedSupplierVerified,
     supplierVerified,
+    supplierDocsExceptionAcknowledged: Boolean(supplierDocsExceptionAcknowledged),
+    supplierRequirementMet,
     canSelectProduction,
     canSelectSoftLaunch,
     canSelectLive,
