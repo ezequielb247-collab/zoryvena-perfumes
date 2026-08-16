@@ -131,16 +131,18 @@ function applyConfig() {
 
 function polishPublicCopy() {
   const replacements = new Map([
-    ['Os perfumes são originais?', 'A Zoryvena seleciona produtos com procedência verificada e mantém controle interno de fornecedor, lote e origem.'],
+    ['Os perfumes são originais?', 'A documentação de procedência do fornecedor ainda não está disponível para verificação. Por isso, a Zoryvena não apresenta origem ou procedência documental como comprovada. Em caso de dúvida sobre um produto, fale com a equipe antes da compra.'],
     ['Como funcionará a entrega?', 'A Zoryvena é virtual. Para entrega, o frete é cotado antes da geração do pagamento; eventual retirada em Macaé é combinada individualmente.'],
     ['Quero consultar preço e estoque', 'Cada produto mostra preço normal, condição no Pix, parcelamento e disponibilidade. Quando a quantidade estiver sob consulta, fale com a equipe pelo WhatsApp.'],
   ]);
   document.querySelectorAll('.faq details').forEach(detail => {
     const summary = detail.querySelector('summary');
     const paragraph = detail.querySelector('p');
-    const replacement = replacements.get(summary?.textContent?.trim());
+    const originalSummary = summary?.textContent?.trim();
+    const replacement = replacements.get(originalSummary);
     if (!replacement || !paragraph) return;
-    if (summary.textContent.trim() === 'Como funcionará a entrega?') summary.textContent = 'Como funciona a entrega?';
+    if (originalSummary === 'Como funcionará a entrega?') summary.textContent = 'Como funciona a entrega?';
+    if (originalSummary === 'Os perfumes são originais?') summary.textContent = 'Como a Zoryvena trata a procedência?';
     paragraph.textContent = replacement;
   });
 }
@@ -178,6 +180,16 @@ function bindImageFallbacks() {
   }, true);
 }
 
+function updateFavoriteAriaLabel(element, active) {
+  const current = String(element.getAttribute('aria-label') || '').trim();
+  const productName = current
+    .replace(/^(Adicionar|Remover)\s+/i, '')
+    .replace(/\s+(aos|dos)\s+favoritos$/i, '')
+    .trim();
+  const suffix = active ? 'dos favoritos' : 'aos favoritos';
+  element.setAttribute('aria-label', `${active ? 'Remover' : 'Adicionar'}${productName ? ` ${productName}` : ''} ${suffix}`);
+}
+
 function bindGlobalActions() {
   document.addEventListener('click', event => {
     const favorite = event.target.closest('[data-favorite]');
@@ -186,6 +198,7 @@ function bindGlobalActions() {
       const active = toggleFavorite(favorite.dataset.favorite);
       favorite.classList.toggle('active', active);
       favorite.textContent = active ? '♥' : '♡';
+      updateFavoriteAriaLabel(favorite, active);
       showToast(active ? 'Adicionado aos favoritos.' : 'Removido dos favoritos.');
     }
   });
