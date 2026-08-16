@@ -30,11 +30,17 @@ const environmentNote = document.querySelector('#environmentNote');
 const approved = result === 'sucesso' || result === 'approved';
 const failed = result === 'falha' || result === 'failure' || result === 'rejected';
 const isPix = result === 'pix' && lastOrder?.paymentMethod === 'pix' && lastOrder?.pix;
+const isTestEnvironment = lastOrder?.environment === 'test';
 
 let countdownTimer = null;
 let statusTimer = null;
 let statusRequestRunning = false;
 let finalStateRendered = false;
+
+if (environmentNote) {
+  environmentNote.hidden = !isTestEnvironment;
+  if (isTestEnvironment) environmentNote.textContent = 'Ambiente de teste: nenhuma cobrança real é realizada.';
+}
 
 function stopTimers() {
   if (countdownTimer) clearInterval(countdownTimer);
@@ -182,7 +188,8 @@ function renderPaymentApproved(statusData = {}) {
   primary.textContent = 'Continuar comprando';
   primary.href = '/catalogo.html';
 
-  if (environmentNote && lastOrder?.environment === 'test') {
+  if (environmentNote && isTestEnvironment) {
+    environmentNote.hidden = false;
     environmentNote.textContent = 'Teste concluído: o webhook e a atualização automática do pedido funcionaram corretamente.';
   }
   minimizeStoredOrder('Pagamento aprovado');
@@ -246,8 +253,8 @@ if (isPix) {
   const chargedAmount = Number(pix.chargedAmount || lastOrder.total || 0);
   const actualOrderTotal = Number(pix.actualOrderTotal || lastOrder.total || 0);
 
-  eyebrow.textContent = 'Pagamento por Pix';
-  title.textContent = lastOrder.environment === 'test' ? 'Escaneie o QR Code para testar' : 'Escaneie o QR Code para pagar';
+  eyebrow.textContent = isTestEnvironment ? 'Pagamento por Pix — teste' : 'Pagamento por Pix';
+  title.textContent = isTestEnvironment ? 'Escaneie o QR Code para testar' : 'Escaneie o QR Code para pagar';
   message.textContent = pix.simulated
     ? `O sandbox do Mercado Pago exige um Pix predefinido de ${money.format(chargedAmount)}. O total real do pedido é ${money.format(actualOrderTotal)} e será usado somente quando ativarmos a produção.`
     : 'Após o pagamento, a confirmação será processada pelo Mercado Pago e vinculada ao seu pedido.';

@@ -61,9 +61,11 @@ export function productCard(product) {
   const pix = pixPriceText(product);
   const href = safeInternalHref(productUrl(product), '/catalogo.html');
   const id = escapeHtml(product.id);
+  const favoriteActive = favorites.includes(product.id);
+  const favoriteLabel = `${favoriteActive ? 'Remover' : 'Adicionar'} ${product.name} ${favoriteActive ? 'dos' : 'aos'} favoritos`;
   return `<article class="product-card" data-id="${id}">
     ${product.badge ? `<span class="product-badge">${escapeHtml(product.badge)}</span>` : ''}
-    <button class="favorite-button ${favorites.includes(product.id) ? 'active' : ''}" data-favorite="${id}" aria-label="Adicionar ${escapeHtml(product.name)} aos favoritos">${favorites.includes(product.id) ? '♥' : '♡'}</button>
+    <button class="favorite-button ${favoriteActive ? 'active' : ''}" data-favorite="${id}" aria-label="${escapeHtml(favoriteLabel)}">${favoriteActive ? '♥' : '♡'}</button>
     <a href="${escapeHtml(href)}" class="product-media-link">${media(product)}</a>
     <div class="product-card-body">
       <span class="eyebrow">${escapeHtml(product.brand)} · ${escapeHtml(product.gender)}</span>

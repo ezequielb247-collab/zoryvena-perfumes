@@ -9,6 +9,7 @@ import {
   productWhatsapp,
   productImage,
   getProducts,
+  getFavorites,
   showToast,
   syncStoreData,
 } from './store.js';
@@ -53,6 +54,8 @@ function renderProduct(product) {
   const safeId = escapeHtml(product.id);
   const consultationUrl = escapeHtml(productWhatsapp(product));
   const hasImage = Boolean(productImage(product));
+  const favoriteActive = getFavorites().includes(product.id);
+  const favoriteLabel = `${favoriteActive ? 'Remover' : 'Adicionar'} ${product.name} ${favoriteActive ? 'dos' : 'aos'} favoritos`;
 
   document.title = `${String(product.name || '').slice(0, 80)} ${String(product.brand || '').slice(0, 80)} | Zoryvena Perfumes`;
   container.innerHTML = `<div class="product-detail-grid">
@@ -68,7 +71,7 @@ function renderProduct(product) {
       </div>
       <div class="detail-actions">
         ${isAvailable(product) ? '<button class="button button-gold" id="addProduct">Adicionar ao carrinho</button>' : `<a class="button button-gold" target="_blank" rel="noopener noreferrer" href="${consultationUrl}">Consultar pelo WhatsApp</a>`}
-        <button class="button button-outline" data-favorite="${safeId}">♡ Favoritar</button>
+        <button class="button button-outline ${favoriteActive ? 'active' : ''}" data-favorite="${safeId}" aria-label="${escapeHtml(favoriteLabel)}">${favoriteActive ? '♥ Remover dos favoritos' : '♡ Favoritar'}</button>
         <label class="button button-outline compare-label"><input type="checkbox" data-compare="${safeId}"> Comparar</label>
       </div>
       <dl class="product-facts"><div><dt>Volume</dt><dd>${escapeHtml(product.volume)}</dd></div><div><dt>Família</dt><dd>${escapeHtml(product.family)}</dd></div><div><dt>Ocasião</dt><dd>${escapeHtml(product.occasion)}</dd></div><div><dt>Clima</dt><dd>${escapeHtml(product.climate)}</dd></div><div><dt>Fixação</dt><dd>${escapeHtml(product.fixation)}</dd></div><div><dt>Projeção</dt><dd>${escapeHtml(product.projection)}</dd></div></dl>
