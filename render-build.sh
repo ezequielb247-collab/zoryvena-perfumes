@@ -48,7 +48,7 @@ mkdir -p dist/.well-known
 
 # Publica somente os arquivos necessários para a loja e o painel administrativo.
 cp -R assets politicas produto admin dist/
-cp index.html catalogo.html carrinho.html checkout.html cartao.html pagamento.html comparar.html contato.html quiz.html sobre.html 404.html dist/
+cp index.html catalogo.html carrinho.html checkout.html cartao.html pagamento.html frete.html comparar.html contato.html quiz.html sobre.html 404.html dist/
 cp manifest.webmanifest robots.txt sitemap.xml dist/
 cp .well-known/security.txt dist/.well-known/security.txt
 
@@ -56,6 +56,7 @@ cp .well-known/security.txt dist/.well-known/security.txt
 test -f dist/index.html || fail_build 'página inicial ausente no dist.'
 test -f dist/admin/index.html || fail_build 'painel administrativo ausente no dist.'
 test -f dist/checkout.html || fail_build 'checkout ausente no dist.'
+test -f dist/frete.html || fail_build 'página de cotação de frete ausente no dist.'
 test -f dist/.well-known/security.txt || fail_build 'security.txt ausente no dist.'
 
 printf 'Build seguro da Zoryvena criado em dist/.\n'
