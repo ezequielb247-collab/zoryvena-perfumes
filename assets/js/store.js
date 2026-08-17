@@ -18,6 +18,18 @@ const ALLOWED_IMAGE_HOSTS = new Set([
   'zaoud.it',
   'media.zid.store',
   'lattafa-brasil.com',
+  'armaf.com',
+  'www.justmylook.com',
+  'd2r9epyceweg5n.cloudfront.net',
+  'www.aarfragrances.com',
+  'mimadaconsentida.com',
+  'www.tradeinn.com',
+  'perfumemarket.fr',
+  'www.haarspullen.nl',
+  'acdn-us.mitiendanube.com',
+  'cdn11.bigcommerce.com',
+  'media.douglas.de',
+  'opulensi.com',
 ]);
 
 export const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
