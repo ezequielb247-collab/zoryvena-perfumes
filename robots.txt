@@ -4,5 +4,6 @@ Disallow: /admin/
 Disallow: /checkout.html
 Disallow: /cartao.html
 Disallow: /pagamento.html
+Disallow: /frete.html
 Disallow: /carrinho.html
 Sitemap: https://zoryvena-perfumes.onrender.com/sitemap.xml
