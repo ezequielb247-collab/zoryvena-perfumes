@@ -76,9 +76,12 @@ services:
       - path: /pagamento.html
         name: Cache-Control
         value: no-store, max-age=0
+      - path: /frete.html
+        name: Cache-Control
+        value: no-store, max-age=0
       - path: /carrinho.html
         name: Cache-Control
         value: no-store, max-age=0
       - path: /assets/*
         name: Cache-Control
-        value: public, max-age=86400, must-revalidate
+        value: public, max-age=0, must-revalidate
