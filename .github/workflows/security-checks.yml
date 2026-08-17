@@ -102,9 +102,16 @@ jobs:
           test -f dist/checkout.html
           test -f dist/cartao.html
           test -f dist/pagamento.html
+          test -f dist/frete.html
 
       - name: Smoke test live public storefront
         shell: bash
         run: |
           set -euo pipefail
           node tests/live-storefront-smoke.mjs
+
+      - name: Smoke test live checkout functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/live-edge-functions-smoke.mjs
