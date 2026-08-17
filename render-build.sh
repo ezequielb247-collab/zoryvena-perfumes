@@ -52,6 +52,22 @@ cp index.html catalogo.html carrinho.html checkout.html cartao.html pagamento.ht
 cp manifest.webmanifest robots.txt sitemap.xml dist/
 cp .well-known/security.txt dist/.well-known/security.txt
 
+# Alguns HTMLs de produtos antigos permanecem no repositório para preservar URLs históricas.
+# O build normaliza qualquer comunicação comercial antiga antes de publicar esses arquivos.
+while IFS= read -r -d '' page; do
+  sed -i \
+    -e 's/🚚 Frete grátis para todo o Brasil nas compras acima de R\$ 299/📦 Entrega com cotação antes do pagamento • Retirada combinada em Macaé/g' \
+    -e 's/Informações comerciais e empresariais serão preenchidas antes do lançamento\./Compra segura e atendimento exclusivamente pelos canais oficiais./g' \
+    "$page"
+done < <(find dist/produto -type f -name 'index.html' -print0)
+
+if grep -RInF --include='*.html' 'Frete grátis para todo o Brasil' dist/produto; then
+  fail_build 'página legada de produto ainda promete frete grátis.'
+fi
+if grep -RInF --include='*.html' 'Informações comerciais e empresariais serão preenchidas antes do lançamento' dist/produto; then
+  fail_build 'página legada de produto ainda contém copy de pré-lançamento.'
+fi
+
 # Confere os arquivos essenciais antes de entregar o diretório ao Render.
 test -f dist/index.html || fail_build 'página inicial ausente no dist.'
 test -f dist/admin/index.html || fail_build 'painel administrativo ausente no dist.'
