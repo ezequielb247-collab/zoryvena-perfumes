@@ -1,3 +1,5 @@
+import './shipping-checkout-bootstrap.mjs';
+
 export function normalizeDelivery(value) {
   if (value === 'pickup') return 'pickup';
   if (value === 'shipping') return 'shipping';
@@ -17,6 +19,6 @@ export function shouldRequestShippingQuote(delivery) {
 export function checkoutDestination(delivery) {
   const normalized = normalizeDelivery(delivery);
   if (normalized === 'pickup') return 'payment';
-  if (normalized === 'shipping') return 'whatsapp_quote';
+  if (normalized === 'shipping') return 'registered_quote';
   return 'invalid';
 }

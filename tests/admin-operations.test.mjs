@@ -21,6 +21,8 @@ const orders = [
   { id: 'separating', status: 'Pagamento aprovado', fulfillment_status: 'Em separação', archived_at: null },
   { id: 'pickup', status: 'Pagamento aprovado', fulfillment_status: 'Pronto para retirada', archived_at: null },
   { id: 'pending', status: 'Aguardando pagamento', fulfillment_status: 'Aguardando pagamento', archived_at: null },
+  { id: 'quote-pending', status: 'Aguardando cotação de frete', fulfillment_status: 'Aguardando cotação de frete', archived_at: null },
+  { id: 'quote-ready', status: 'Frete cotado', fulfillment_status: 'Frete cotado', archived_at: null },
   { id: 'archived', status: 'Aguardando pagamento', fulfillment_status: 'Aguardando pagamento', archived_at: '2026-08-07T00:00:00Z' },
 ];
 const summary = operationalSummary(products, orders, {
@@ -41,6 +43,7 @@ assert.equal(summary.soldOutProducts.length, 1);
 assert.equal(summary.pricingRiskProducts.length, 1);
 assert.equal(summary.imageRiskProducts.length, 1);
 assert.equal(summary.pendingPaymentOrders.length, 1);
+assert.equal(summary.shippingQuoteOrders.length, 2);
 assert.equal(summary.newOrders.length, 1);
 assert.equal(summary.separatingOrders.length, 1);
 assert.equal(summary.pickupReadyOrders.length, 1);

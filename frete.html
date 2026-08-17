@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#050505">
+  <title>Cotação de frete | Zoryvena Perfumes</title>
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/premium.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Zoryvena Perfumes — página inicial"><img class="brand-logo" src="/assets/branding/logo-horizontal-dark.png" alt="Zoryvena Perfumes"></a>
+    <div class="header-actions"><a class="icon-link" href="/carrinho.html" aria-label="Carrinho">🛍<span data-cart-count>0</span></a></div>
+  </header>
+  <main class="section">
+    <div class="section-heading center">
+      <span class="eyebrow">Entrega</span>
+      <h1>Acompanhe sua cotação de frete</h1>
+      <p>O pagamento só é liberado depois que o valor do frete for informado e você confirmar que deseja continuar.</p>
+    </div>
+    <article class="story-card" style="max-width:760px;margin:0 auto">
+      <div id="shippingQuoteLoading"><p>Consultando sua cotação…</p></div>
+      <div id="shippingQuoteContent" hidden>
+        <p class="eyebrow" id="shippingOrderCode">Pedido</p>
+        <h2 id="shippingQuoteTitle">Cotação em andamento</h2>
+        <p id="shippingQuoteMessage"></p>
+        <div class="detail-list" id="shippingQuoteValues"></div>
+        <div class="hero-actions" style="margin-top:24px;flex-wrap:wrap">
+          <button class="button button-gold" id="startShippingPayment" type="button" hidden>Continuar para o pagamento</button>
+          <a class="button button-outline" id="shippingWhatsapp" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
+          <button class="button button-outline" id="refreshShippingQuote" type="button">Atualizar cotação</button>
+        </div>
+      </div>
+      <div id="shippingQuoteError" class="empty-state" hidden>
+        <h2>Não foi possível abrir esta cotação</h2>
+        <p id="shippingQuoteErrorMessage">Confira o link recebido e tente novamente.</p>
+        <a class="button button-dark" href="/checkout.html">Voltar ao checkout</a>
+      </div>
+    </article>
+  </main>
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/assets/js/common.js"></script>
+  <script type="module" src="/assets/js/shipping-quote.js"></script>
+</body>
+</html>
