@@ -118,10 +118,18 @@ async function releaseInitialization(admin: any, orderId: string, reason: string
   }
 }
 
-async function initializePayment(admin: any, order: any, customer: any, environment: "production" | "test", headers: Record<string, string>) {
+async function initializePayment(
+  admin: any,
+  order: any,
+  customer: any,
+  environment: "production" | "test",
+  headers: Record<string, string>,
+  onExternalCharge: () => void = () => {},
+) {
   const orderId = String(order.id || "");
   const statusToken = String(order.public_status_token || order.statusToken || "");
   const reservationExpiresAt = order.inventory_reservation_expires_at || order.reservationExpiresAt || "";
+  const customerEmail = String(order.customer_email || customer.email || "").trim().toLowerCase();
 
   if (order.payment_method === "card" || order.paymentMethod === "card") {
     const publicKey = Deno.env.get(environment === "production"
@@ -146,6 +154,7 @@ async function initializePayment(admin: any, order: any, customer: any, environm
       statusToken,
       paymentMode: "card_brick",
       cardPublicKey: publicKey,
+      customerEmail,
       testBuyerEmail: environment === "test" ? "test@testuser.com" : "",
       reservationExpiresAt,
       containsPreorder: Boolean(order.contains_preorder ?? order.containsPreorder),
@@ -187,9 +196,7 @@ async function initializePayment(admin: any, order: any, customer: any, environm
       throw new Error("A cobrança Pix existente não passou pela verificação de integridade.");
     }
   } else {
-    const payerEmail = environment === "production"
-      ? String(customer.email || order.customer_email || "")
-      : "test_user_br@testuser.com";
+    const payerEmail = environment === "production" ? customerEmail : "test_user_br@testuser.com";
     const created = await mpRequest("https://api.mercadopago.com/v1/orders", token, {
       method: "POST",
       headers: { "X-Idempotency-Key": `zoryvena-pix-${environment}-${orderId}` },
@@ -208,6 +215,7 @@ async function initializePayment(admin: any, order: any, customer: any, environm
       await releaseInitialization(admin, orderId, "pix_initialization_failed");
       throw new Error("Não foi possível gerar o QR Code Pix.");
     }
+    onExternalCharge();
     data = created.data;
     payment = data?.transactions?.payments?.[0] || {};
   }
@@ -235,6 +243,7 @@ async function initializePayment(admin: any, order: any, customer: any, environm
     paymentMethod: "pix",
     statusToken,
     paymentMode: "pix",
+    customerEmail,
     mercadoPagoOrderId: String(data.id || order.mercado_pago_order_id || ""),
     paymentId: String(payment.id || order.mercado_pago_payment_id || ""),
     reservationExpiresAt,
@@ -295,7 +304,7 @@ Deno.serve(async (req: Request) => {
       ], 900);
       if (!allowed) return json({ error: "Muitas tentativas de pagamento. Aguarde 15 minutos." }, 429, headers);
 
-      const { data: prepared, error: prepareError } = await admin.rpc("prepare_shipping_order_payment", {
+      const { error: prepareError } = await admin.rpc("prepare_shipping_order_payment", {
         p_order_id: orderId,
         p_status_token: statusToken,
       });
@@ -307,7 +316,14 @@ Deno.serve(async (req: Request) => {
       ).eq("id", orderId).eq("public_status_token", statusToken).single();
       if (orderError) throw orderError;
       releaseOnFailure = !order.mercado_pago_order_id;
-      return await initializePayment(admin, order, { name: order.customer_name, email: order.customer_email }, environment, headers);
+      return await initializePayment(
+        admin,
+        order,
+        { name: order.customer_name, email: order.customer_email },
+        environment,
+        headers,
+        () => { releaseOnFailure = false; },
+      );
     }
 
     const customer = payload?.customer;
@@ -374,7 +390,14 @@ Deno.serve(async (req: Request) => {
       "id,order_code,total,payment_method,public_status_token,inventory_reservation_expires_at,contains_preorder,contains_ready_stock,customer_name,customer_email,mercado_pago_order_id,mercado_pago_payment_id,payment_url"
     ).single();
     if (termsError) throw termsError;
-    return await initializePayment(admin, order, customer, environment, headers);
+    return await initializePayment(
+      admin,
+      order,
+      customer,
+      environment,
+      headers,
+      () => { releaseOnFailure = false; },
+    );
   } catch (error) {
     console.error("create-order failed", error instanceof Error ? error.message : "unknown");
     if (admin && createdOrderId && releaseOnFailure) await releaseInitialization(admin, createdOrderId, "order_initialization_failed");
