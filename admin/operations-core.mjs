@@ -1,3 +1,5 @@
+import './shipping-quotes-bootstrap.mjs';
+
 const amount = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 
 export function grossMarginPercent(price, cost) {
@@ -44,6 +46,9 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
   const pendingPaymentOrders = activeOrders.filter(order =>
     ['Aguardando pagamento', 'Aguardando confirmação', 'Pagamento em análise'].includes(order.status)
   );
+  const shippingQuoteOrders = activeOrders.filter(order =>
+    ['Aguardando cotação de frete', 'Frete cotado'].includes(order.status)
+  );
   const newOrders = approvedOrders.filter(order => order.fulfillment_status === 'Novo pedido');
   const separatingOrders = approvedOrders.filter(order => order.fulfillment_status === 'Em separação');
   const pickupReadyOrders = approvedOrders.filter(order => order.fulfillment_status === 'Pronto para retirada');
@@ -56,6 +61,7 @@ export function operationalSummary(products = [], orders = [], settings = {}) {
     pricingRiskProducts,
     imageRiskProducts,
     pendingPaymentOrders,
+    shippingQuoteOrders,
     newOrders,
     separatingOrders,
     pickupReadyOrders,
