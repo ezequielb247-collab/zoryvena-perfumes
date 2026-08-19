@@ -98,6 +98,27 @@ Nunca usar imagem gerada por IA como foto de produto real. Hosts externos ficam 
 
 O objetivo continua sendo migrar as referências temporárias para fotos próprias ou autorizadas armazenadas no Supabase Storage.
 
+## Cobertura de imagens do catálogo
+
+Em 19/08/2026 foi preparado o lote `20260819033000_complete_product_images.sql` para completar os cadastros-base que ainda estavam sem foto.
+
+Antes dessa mudança, todos os produtos efetivamente expostos na vitrine já possuíam imagem. Os dez cadastros abaixo estavam sem imagem e permanecem com o mesmo estado comercial; adicionar a foto **não ativa venda, não habilita encomenda e não altera preço, custo ou estoque**:
+
+- `afnan-9pm` — 9PM;
+- `lattafa-asad-bourbon` — Asad Bourbon;
+- `afnan-supremacy-not-only-intense` — Supremacy Not Only Intense;
+- `lattafa-hayaati` — Hayaati;
+- `maison-alhambra-jean-lowe-immortel` — Jean Lowe Immortel;
+- `lattafa-mayar` — Mayar;
+- `afnan-9pm-pour-femme` — 9PM Pour Femme;
+- `lattafa-honor-and-glory` — Bade’e Al Oud Honor & Glory;
+- `lattafa-oud-for-glory` — Bade’e Al Oud Oud for Glory;
+- `paris-corner-khair-pistachio` — Khair Pistachio.
+
+As identidades foram conferidas em páginas de fabricante quando disponíveis, incluindo Afnan, Lattafa e Paris Corner. Para manter a política de segurança já implantada, os arquivos usados no cadastro vêm apenas de `zaoud.it` e `orientalaromas.com`, dois hosts reais de varejistas que já estavam explicitamente autorizados no storefront e na CSP. Essas referências continuam sendo temporárias e devem ser substituídas por foto própria, fornecedor ou arquivo oficial armazenado no Supabase Storage quando disponível.
+
+A migration possui trava atômica para os dez IDs e só preenche `image` quando o campo ainda está vazio; uma imagem existente nunca é sobrescrita.
+
 ## Dados que ainda queremos manter por produto
 
 - nome e marca;
