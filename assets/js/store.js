@@ -16,6 +16,7 @@ const ALLOWED_IMAGE_HOSTS = new Set([
   'images.tcdn.com.br',
   'orientalaromas.com',
   'zaoud.it',
+  'www.lattafa-usa.com',
   'media.zid.store',
   'lattafa-brasil.com',
   'armaf.com',
@@ -292,7 +293,7 @@ export async function getOrderStatus(order) {
 }
 
 export function getOrders() { return load(KEYS.orders, []); }
-export function saveOrders(orders) { save(KEYS.orders, orders); }
+export function saveOrders(orders) { saveOrders(orders); }
 
 export function showToast(message) {
   const toast = document.querySelector('.toast');
