@@ -27,6 +27,12 @@
 
 > O checkout de entrega não deve redirecionar diretamente para o WhatsApp. O WhatsApp fica como canal de atendimento durante a cotação; o pagamento continua pelo link seguro de frete do próprio site.
 
+## Correção validada em 2026-08-19
+
+Durante um teste controlado com CEP `01001-000` (São Paulo/SP), a etapa **Continuar para o pagamento** revelou uma falha em `prepare_shipping_order_payment`: a função tentava atualizar `order_items.line_total`, mas essa coluna é gerada automaticamente pelo Postgres.
+
+A correção remove a atribuição manual de `line_total`. O valor continua sendo recalculado automaticamente a partir dos campos base da linha, enquanto a função segue atualizando SKU, produto, marca, preço unitário, quantidade pronta e quantidade sob encomenda antes de reservar o pedido.
+
 ## Status
 
 - Aguardando confirmação

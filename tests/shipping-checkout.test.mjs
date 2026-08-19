@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [migration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, build, robots, cardFunction, checkoutPage, shippingBootstrap] = await Promise.all([
+const [migration, paymentFixMigration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, build, robots, cardFunction, checkoutPage, shippingBootstrap] = await Promise.all([
   readFile(new URL('../supabase/migrations/20260817002000_complete_manual_shipping_checkout.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../supabase/migrations/20260819041000_fix_shipping_payment_generated_line_total.sql', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/create-order/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/shipping-quote-status/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../frete.html', import.meta.url), 'utf8'),
@@ -27,6 +28,12 @@ assert.match(migration, /inventory_reserved_at = now\(\)/);
 assert.match(migration, /inventory_reservation_expires_at = now\(\) \+ interval '35 minutes'/);
 assert.match(migration, /grant execute on function public\.create_shipping_quote_request\(jsonb,jsonb,text,text\) to service_role/);
 assert.match(migration, /grant execute on function public\.admin_set_shipping_quote\(uuid,numeric,text\) to authenticated/);
+
+assert.match(paymentFixMigration, /create or replace function public\.prepare_shipping_order_payment/);
+assert.doesNotMatch(paymentFixMigration, /line_total\s*=/);
+assert.match(paymentFixMigration, /preorder_quantity = v_preorder_quantity\s+where id = v_item\.id/);
+assert.match(paymentFixMigration, /inventory_reserved_at = now\(\)/);
+assert.match(paymentFixMigration, /stock = stock - v_ready_quantity/);
 
 assert.match(createOrder, /payload\?\.action === "start_shipping_payment"/);
 assert.match(createOrder, /create_shipping_quote_request/);
