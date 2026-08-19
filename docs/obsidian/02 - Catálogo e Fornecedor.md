@@ -27,7 +27,9 @@ O resultado é arredondado para preço terminado em `,90`. Isso é regra inicial
 
 ## Primeiro lote seguro
 
-O lote `20260817150000_supplier_catalog_batch_01.sql` cobre apenas correspondências inequívocas já existentes no catálogo-base. Ele:
+O lote `20260819021934_supplier_catalog_batch_01.sql` cobre apenas correspondências inequívocas já existentes no catálogo-base. Ele foi originalmente preparado no PR #19 como `20260817150000_supplier_catalog_batch_01.sql`; ao ser aplicado pelo endpoint de migrações do Supabase em 18/08/2026 (horário de Brasília), o histórico remoto recebeu a versão `20260819021934`, e o arquivo versionado foi alinhado para evitar drift entre Git e banco.
+
+Ele:
 
 - atualiza o custo recebido do fornecedor;
 - preserva preços de cartão e Pix que já existam;
@@ -37,6 +39,17 @@ O lote `20260817150000_supplier_catalog_batch_01.sql` cobre apenas correspondên
 - mantém a foto existente quando já houver uma;
 - preenche foto real de referência quando o cadastro estava sem imagem;
 - desabilita encomenda de itens do catálogo-base explicitamente marcados como em falta.
+
+Validação pós-aplicação do lote 1:
+
+- 21/21 produtos disponíveis encontrados;
+- 21/21 custos conferidos;
+- 21/21 preços de cartão preservados;
+- 21/21 preços Pix preservados;
+- 21/21 estoques físicos preservados;
+- 21/21 imagens presentes;
+- 21/21 produtos disponíveis com encomenda habilitada;
+- 4/4 itens em falta com encomenda desabilitada e estoque físico preservado.
 
 ## Duplicidades e conflitos detectados
 
