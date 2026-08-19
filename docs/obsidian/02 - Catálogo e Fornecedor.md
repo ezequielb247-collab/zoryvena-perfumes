@@ -51,6 +51,16 @@ Validação pós-aplicação do lote 1:
 - 21/21 produtos disponíveis com encomenda habilitada;
 - 4/4 itens em falta com encomenda desabilitada e estoque físico preservado.
 
+## Segundo lote seguro
+
+O lote `20260817153000_supplier_catalog_batch_02.sql` adiciona mais três correspondências confirmadas que já existiam no catálogo-base:
+
+- `L’AVENTUI` → **L’Aventure**, Al Haramain, custo R$ 270;
+- `FAKHAR ROSE` → **Fakhar Rose**, Lattafa, custo R$ 175;
+- `CLUB DE NUIT INTENSE WOMAM` → **Club de Nuit Intense Woman**, Armaf, custo R$ 220.
+
+O lote segue exatamente as mesmas regras do lote 1: preserva preços existentes, não inventa estoque físico, habilita somente encomenda e usa foto real apenas quando o cadastro ainda não possui imagem. A referência do Fakhar Rose usa host já autorizado na política de imagens, sem ampliar a CSP.
+
 ## Duplicidades e conflitos detectados
 
 Não publicar automaticamente antes de resolver:
@@ -60,7 +70,7 @@ Não publicar automaticamente antes de resolver:
 - `CLUB DE NUIT PRIVATE KEY`: apareceu nos dois grupos com custos diferentes;
 - `QUEEN`: apareceu disponível e também na seção “Em falta”;
 - `ANA ABIYEDH ROUGE`: apareceu disponível e também na seção “Em falta”;
-- grafias como `KHAMRAH DUKHAM`, `L’AVENTUI`, `HES CONFESSION`, `WOMAM` e similares devem ser normalizadas somente após confirmar o produto correto.
+- grafias como `KHAMRAH DUKHAM`, `HES CONFESSION` e similares devem ser normalizadas somente após confirmar o produto correto.
 
 ## Regra para imagens
 
