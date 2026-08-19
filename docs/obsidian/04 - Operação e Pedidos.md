@@ -33,6 +33,10 @@ Durante um teste controlado com CEP `01001-000` (São Paulo/SP), a etapa **Conti
 
 A correção remove a atribuição manual de `line_total`. O valor continua sendo recalculado automaticamente a partir dos campos base da linha, enquanto a função segue atualizando SKU, produto, marca, preço unitário, quantidade pronta e quantidade sob encomenda antes de reservar o pedido.
 
+Migration registrada no Supabase: `20260819041048_fix_shipping_payment_generated_line_total`.
+
+No reteste controlado, o pedido passou de **Frete cotado** para **Aguardando pagamento**, com subtotal de R$ 179,90, frete fictício de R$ 25,00 e total de R$ 204,90. O item foi reconhecido como encomenda (`ready_quantity = 0`, `preorder_quantity = 1`), `line_total` foi calculado automaticamente em R$ 179,90 e o estoque físico permaneceu 0. A reserva foi liberada e os registros de teste foram removidos após a validação.
+
 ## Status
 
 - Aguardando confirmação
