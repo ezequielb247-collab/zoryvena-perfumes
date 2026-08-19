@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const [migration, paymentFixMigration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, build, robots, cardFunction, checkoutPage, shippingBootstrap] = await Promise.all([
   readFile(new URL('../supabase/migrations/20260817002000_complete_manual_shipping_checkout.sql', import.meta.url), 'utf8'),
-  readFile(new URL('../supabase/migrations/20260819041000_fix_shipping_payment_generated_line_total.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../supabase/migrations/20260819041048_fix_shipping_payment_generated_line_total.sql', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/create-order/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/shipping-quote-status/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../frete.html', import.meta.url), 'utf8'),
