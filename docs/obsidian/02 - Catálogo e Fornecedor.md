@@ -129,6 +129,26 @@ Validação pós-aplicação das imagens:
 - 10/10 preservaram preço, Pix e custo ausentes;
 - a vitrine pública retorna 24 produtos visíveis e 0 produtos visíveis sem imagem.
 
+## Revisão visual dos 24 produtos em 19/08/2026
+
+A vitrine pública foi revisada visualmente produto por produto. Entre os 24 perfumes visíveis, sete tinham imagem inadequada para apresentação comercial: placeholder, arte genérica, imagem de notas olfativas ou ausência visual no card.
+
+Lote de substituição:
+
+- `lattafa-asad` — Asad;
+- `lattafa-fakhar-black` — Fakhar Black;
+- `lattafa-qaed-al-fursan` — Qaed Al Fursan;
+- `lattafa-yara` — Yara;
+- `lattafa-yara-moi` — Yara Moi;
+- `lattafa-eclaire` — Eclaire;
+- `lattafa-khamrah` — Khamrah.
+
+Cinco referências usam imagens oficiais do fabricante em `www.lattafa-usa.com`: Asad, Fakhar Black, Yara, Eclaire e Khamrah. Yara Moi e Qaed Al Fursan usam temporariamente fotos reais de produto do varejista `zaoud.it`, pois são referências adequadas já compatíveis com a política operacional da loja.
+
+A migration desse lote altera exclusivamente `products.image`. Preço, preço Pix, custo, estoque físico, status, atividade, disponibilidade do fornecedor e regras de encomenda ficam preservados. Em especial, a unidade física já cadastrada de Yara deve permanecer intacta.
+
+O host `www.lattafa-usa.com` entra no allowlist explícito do storefront e no `img-src` da CSP. As referências de varejista continuam temporárias; a preferência futura permanece foto própria ou autorizada pelo fornecedor armazenada no Supabase Storage.
+
 ## Dados que ainda queremos manter por produto
 
 - nome e marca;
