@@ -16,6 +16,7 @@ const ALLOWED_IMAGE_HOSTS = new Set([
   'images.tcdn.com.br',
   'orientalaromas.com',
   'zaoud.it',
+  'www.lattafa-usa.com',
   'media.zid.store',
   'lattafa-brasil.com',
   'armaf.com',
