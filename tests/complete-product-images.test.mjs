@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const [migration, store, render] = await Promise.all([
-  readFile(new URL('../supabase/migrations/20260819033000_complete_product_images.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../supabase/migrations/20260819032916_complete_product_images.sql', import.meta.url), 'utf8'),
   readFile(new URL('../assets/js/store.js', import.meta.url), 'utf8'),
   readFile(new URL('../render.yaml', import.meta.url), 'utf8'),
 ]);

@@ -100,9 +100,9 @@ O objetivo continua sendo migrar as referências temporárias para fotos própri
 
 ## Cobertura de imagens do catálogo
 
-Em 19/08/2026 foi preparado o lote `20260819033000_complete_product_images.sql` para completar os cadastros-base que ainda estavam sem foto.
+O lote `20260819032916_complete_product_images.sql` completa os cadastros-base que ainda estavam sem foto. Ele foi originalmente preparado e mergeado no PR #23 como `20260819033000_complete_product_images.sql`; ao ser aplicado pelo endpoint de migrações do Supabase em 19/08/2026, o histórico remoto recebeu a versão `20260819032916`, e o arquivo versionado foi alinhado para evitar drift entre Git e banco.
 
-Antes dessa mudança, todos os produtos efetivamente expostos na vitrine já possuíam imagem. Os dez cadastros abaixo estavam sem imagem e permanecem com o mesmo estado comercial; adicionar a foto **não ativa venda, não habilita encomenda e não altera preço, custo ou estoque**:
+Antes dessa mudança, todos os produtos efetivamente expostos na vitrine já possuíam imagem. Os dez cadastros abaixo estavam sem imagem e permaneceram com o mesmo estado comercial; adicionar a foto **não ativou venda, não habilitou encomenda e não alterou preço, custo ou estoque**:
 
 - `afnan-9pm` — 9PM;
 - `lattafa-asad-bourbon` — Asad Bourbon;
@@ -118,6 +118,16 @@ Antes dessa mudança, todos os produtos efetivamente expostos na vitrine já pos
 As identidades foram conferidas em páginas de fabricante quando disponíveis, incluindo Afnan, Lattafa e Paris Corner. Para manter a política de segurança já implantada, os arquivos usados no cadastro vêm apenas de `zaoud.it` e `orientalaromas.com`, dois hosts reais de varejistas que já estavam explicitamente autorizados no storefront e na CSP. Essas referências continuam sendo temporárias e devem ser substituídas por foto própria, fornecedor ou arquivo oficial armazenado no Supabase Storage quando disponível.
 
 A migration possui trava atômica para os dez IDs e só preenche `image` quando o campo ainda está vazio; uma imagem existente nunca é sobrescrita.
+
+Validação pós-aplicação das imagens:
+
+- 10/10 cadastros encontrados;
+- 10/10 imagens presentes após a aplicação;
+- 10/10 estoques preservados em zero;
+- 10/10 produtos permaneceram inativos;
+- 10/10 permaneceram com encomenda desligada e limite zero;
+- 10/10 preservaram preço, Pix e custo ausentes;
+- a vitrine pública retorna 24 produtos visíveis e 0 produtos visíveis sem imagem.
 
 ## Dados que ainda queremos manter por produto
 
