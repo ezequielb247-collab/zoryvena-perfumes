@@ -293,7 +293,7 @@ export async function getOrderStatus(order) {
 }
 
 export function getOrders() { return load(KEYS.orders, []); }
-export function saveOrders(orders) { saveOrders(orders); }
+export function saveOrders(orders) { save(KEYS.orders, orders); }
 
 export function showToast(message) {
   const toast = document.querySelector('.toast');
