@@ -53,13 +53,26 @@ Validação pós-aplicação do lote 1:
 
 ## Segundo lote seguro
 
-O lote `20260817153000_supplier_catalog_batch_02.sql` adiciona mais três correspondências confirmadas que já existiam no catálogo-base:
+O lote `20260819022922_supplier_catalog_batch_02.sql` adiciona mais três correspondências confirmadas que já existiam no catálogo-base. Ele foi originalmente preparado e mergeado no PR #20 como `20260817153000_supplier_catalog_batch_02.sql`; ao ser aplicado pelo endpoint de migrações do Supabase em 18/08/2026 (horário de Brasília), o histórico remoto recebeu a versão `20260819022922`, e o arquivo versionado foi alinhado para evitar drift entre Git e banco.
+
+Produtos:
 
 - `L’AVENTUI` → **L’Aventure**, Al Haramain, custo R$ 270;
 - `FAKHAR ROSE` → **Fakhar Rose**, Lattafa, custo R$ 175;
 - `CLUB DE NUIT INTENSE WOMAM` → **Club de Nuit Intense Woman**, Armaf, custo R$ 220.
 
 O lote segue exatamente as mesmas regras do lote 1: preserva preços existentes, não inventa estoque físico, habilita somente encomenda e usa foto real apenas quando o cadastro ainda não possui imagem. A referência do Fakhar Rose usa host já autorizado na política de imagens, sem ampliar a CSP.
+
+Validação pós-aplicação do lote 2:
+
+- 3/3 produtos encontrados;
+- 3/3 custos conferidos;
+- 3/3 preços de cartão preservados;
+- 3/3 preços Pix preservados;
+- 3/3 estoques físicos preservados em zero;
+- 3/3 imagens reais de referência presentes;
+- 3/3 produtos ativos e com encomenda habilitada;
+- 3/3 produtos expostos pelo RPC público da vitrine.
 
 ## Duplicidades e conflitos detectados
 
