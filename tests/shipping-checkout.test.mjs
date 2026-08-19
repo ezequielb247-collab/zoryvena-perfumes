@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [migration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, build, robots, cardFunction] = await Promise.all([
+const [migration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, build, robots, cardFunction, checkoutPage, shippingBootstrap] = await Promise.all([
   readFile(new URL('../supabase/migrations/20260817002000_complete_manual_shipping_checkout.sql', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/create-order/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/shipping-quote-status/index.ts', import.meta.url), 'utf8'),
@@ -11,6 +11,8 @@ const [migration, createOrder, quoteStatus, quotePage, quoteClient, quoteAdmin, 
   readFile(new URL('../render-build.sh', import.meta.url), 'utf8'),
   readFile(new URL('../robots.txt', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/process-card-payment/index.ts', import.meta.url), 'utf8'),
+  readFile(new URL('../checkout.html', import.meta.url), 'utf8'),
+  readFile(new URL('../assets/js/shipping-checkout-bootstrap.mjs', import.meta.url), 'utf8'),
 ]);
 
 assert.match(migration, /create or replace function public\.create_shipping_quote_request/);
@@ -54,5 +56,20 @@ assert.match(quoteAdmin, /admin_set_shipping_quote/);
 assert.match(quoteAdmin, /navigator\.clipboard\.writeText/);
 assert.match(build, /frete\.html/);
 assert.match(robots, /Disallow: \/frete\.html/);
+
+assert.match(shippingBootstrap, /submitted\.get\('delivery'\) !== 'shipping'/);
+assert.match(shippingBootstrap, /supabase\.functions\.invoke\('create-order'/);
+assert.match(shippingBootstrap, /quoteMode !== 'manual_shipping'/);
+assert.match(shippingBootstrap, /sessionStorage\.setItem\('zoryvena\.shipping-quote'/);
+assert.match(shippingBootstrap, /location\.href = `\/frete\.html\?pedido=/);
+assert.doesNotMatch(shippingBootstrap, /whatsappUrl/);
+
+const bootstrapScript = '/assets/js/shipping-checkout-bootstrap.mjs';
+const checkoutScript = '/assets/js/checkout.js';
+assert.match(checkoutPage, /shipping-checkout-bootstrap\.mjs/);
+assert.ok(
+  checkoutPage.indexOf(bootstrapScript) < checkoutPage.indexOf(checkoutScript),
+  'shipping checkout bootstrap must load before checkout.js',
+);
 
 console.log('shipping checkout regression tests: ok');
